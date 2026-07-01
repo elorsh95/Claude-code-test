@@ -1,0 +1,128 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== פונקציות עזר =====
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function memberRef(hid) {
+      return /databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid);
+    }
+
+    function isMember(hid) {
+      return isSignedIn() && exists(memberRef(hid));
+    }
+
+    function memberData(hid) {
+      return get(memberRef(hid)).data;
+    }
+
+    function isOwner(hid) {
+      return isMember(hid) && memberData(hid).isOwner == true;
+    }
+
+    // בעל החשבון מקבל כל הרשאה אוטומטית
+    function perm(hid, key) {
+      return isOwner(hid) ||
+        (isMember(hid) && memberData(hid).permissions[key] == true);
+    }
+
+    function householdData(hid) {
+      return get(/databases/$(database)/documents/households/$(hid)).data;
+    }
+
+    // ===== משתמשים =====
+    match /users/{uid} {
+      // מזוהים יכולים לקרוא פרטי משתמש בסיסיים (לצורך תצוגת שמות)
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ===== חשבונות משפחתיים =====
+    match /households/{hid} {
+      allow read: if isMember(hid);
+      allow create: if isSignedIn() &&
+        request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isOwner(hid);
+
+      // ----- חברים -----
+      match /members/{uid} {
+        allow read: if isMember(hid);
+
+        // יצירה: מנהל עם הרשאת ניהול, או המשתמש עצמו
+        // (בעת יצירת חשבון הוא הבעלים; בקבלת הזמנה הוא חבר רגיל).
+        // הערה: אכיפת קיום הזמנה תואמת לצירוף-עצמי היא הקשחה עתידית
+        // (דורשת מזהי הזמנה דטרמיניסטיים או Cloud Function).
+        allow create: if isSignedIn() && (
+          perm(hid, 'canManageMembers') ||
+          (request.auth.uid == uid && (
+            request.resource.data.isOwner == false ||
+            householdData(hid).ownerId == request.auth.uid
+          ))
+        );
+
+        // עריכה/הסרה של חבר: רק מנהל, ואי אפשר לגעת בבעל החשבון
+        allow update: if perm(hid, 'canManageMembers') &&
+          resource.data.isOwner == false;
+        allow delete: if (perm(hid, 'canManageMembers') &&
+          resource.data.isOwner == false) ||
+          request.auth.uid == uid;
+      }
+
+      // ----- משימות -----
+      match /tasks/{tid} {
+        allow read: if isMember(hid);
+        allow create: if perm(hid, 'canCreateTasks');
+
+        // עריכה מלאה למי שיש לו canEditTasks;
+        // או עדכון שדות סטטוס בלבד למי שרשאי לסמן את המשימה כבוצעה.
+        allow update: if perm(hid, 'canEditTasks') ||
+          (onlyCompletionFields() && canCompleteTask(hid, tid));
+
+        allow delete: if perm(hid, 'canDeleteTasks');
+
+        function onlyCompletionFields() {
+          return request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'completedBy', 'completedAt']);
+        }
+
+        function canCompleteTask(hid2, tid2) {
+          return isMember(hid2) && (
+            isOwner(hid2) ||
+            memberData(hid2).permissions.canCompleteAnyTask == true ||
+            request.auth.uid in get(
+              /databases/$(database)/documents/households/$(hid2)/tasks/$(tid2)
+            ).data.assigneeIds
+          );
+        }
+
+        // ----- היסטוריית משימה -----
+        match /history/{eid} {
+          allow read: if isMember(hid);
+          allow create: if isMember(hid);
+          allow update: if false; // אירועי היסטוריה אינם ניתנים לשינוי
+          allow delete: if perm(hid, 'canDeleteTasks');
+        }
+      }
+    }
+
+    // ===== הזמנות =====
+    match /invitations/{invId} {
+      allow read: if isSignedIn() && (
+        resource.data.email == request.auth.token.email ||
+        perm(resource.data.householdId, 'canManageMembers')
+      );
+      allow create: if isSignedIn() &&
+        perm(request.resource.data.householdId, 'canManageMembers');
+      allow update: if isSignedIn() && (
+        resource.data.email == request.auth.token.email ||
+        perm(resource.data.householdId, 'canManageMembers')
+      );
+      allow delete: if isSignedIn() &&
+        perm(resource.data.householdId, 'canManageMembers');
+    }
+  }
+}

@@ -1,0 +1,107 @@
+# משימות המשפחה 🏠
+
+אפליקציית PWA לניהול משימות ביתיות למשפחה: הרשמה והתחברות, חשבון משפחתי עם בעל חשבון (מנהל המשפחה),
+הזמנת בני משפחה עם תפקיד/מעמד/הרשאות, יצירת משימות ושיוך אחראים, סימון ביצוע, והיסטוריה מלאה לכל משימה.
+
+## תכולת שלב 1 (MVP)
+
+- 🔐 **הרשמה והתחברות** (Firebase Authentication, אימייל + סיסמה)
+- 👑 **חשבון משפחתי** — יוצר החשבון הופך אוטומטית ל**בעל החשבון / מנהל המשפחה** עם כל ההרשאות
+- ✉️ **הזמנת בני משפחה** לפי אימייל, עם הגדרת **תפקיד**, **מעמד** ו**הרשאות** לכל אחד (כולל תבניות מוכנות)
+- ✅ **משימות** — יצירה, עריכה, מחיקה, ושיוך של **אחראי אחד או כמה אחראים**
+- ☑️ **סימון ביצוע** לפי הרשאה (כל משימה / רק משימות שהוקצו לי)
+- ℹ️ **היסטוריית משימה** — לחיצה על אייקון ה-"i" בכל משימה פותחת ציר זמן: מי יצר ומתי, מי שייך, מי סימן כבוצעה וכו'
+- 🛡️ **אכיפת הרשאות בשתי שכבות** — גם ב-UI וגם ב-Firestore Security Rules
+
+## סטאק טכנולוגי
+
+- React 18 + TypeScript + Vite
+- vite-plugin-pwa (ניתן להתקנה בטלפון)
+- react-router-dom
+- Firebase (Auth + Firestore)
+
+## הרצה מקומית
+
+### אפשרות א' — מול Firebase Emulators (מומלץ לבדיקות, ללא צורך בפרויקט אמיתי)
+
+דורש [Firebase CLI](https://firebase.google.com/docs/cli) ו-Java מותקנים.
+
+```bash
+npm install
+cp .env.example .env.local        # ערוך והשאר VITE_USE_EMULATOR=true
+npm run emulators                 # מפעיל Auth + Firestore emulators
+npm run dev                       # בטרמינל נפרד
+```
+
+הגדר ב-`.env.local`:
+
+```
+VITE_USE_EMULATOR=true
+```
+
+שאר משתני ה-Firebase יכולים להישאר עם ערכי placeholder כשעובדים מול emulator.
+
+### אפשרות ב' — מול פרויקט Firebase אמיתי
+
+1. צור פרויקט חדש ב-[Firebase Console](https://console.firebase.google.com/) (חינמי).
+2. הפעל **Authentication → Sign-in method → Email/Password**.
+3. צור **Firestore Database** (Production mode).
+4. ב-Project settings → Your apps → Web app, העתק את פרטי ה-SDK אל `.env.local` (ראה `.env.example`), והגדר `VITE_USE_EMULATOR=false`.
+5. פרוס את חוקי האבטחה והאינדקסים:
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
+6. הרץ:
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+### בנייה ל-production
+
+```bash
+npm run build      # פלט בתיקיית dist/
+npm run preview    # תצוגה מקדימה של ה-build
+```
+
+## מבנה הנתונים (Firestore)
+
+```
+users/{uid}
+households/{hid}
+households/{hid}/members/{uid}
+households/{hid}/tasks/{tid}
+households/{hid}/tasks/{tid}/history/{eid}
+invitations/{invId}
+```
+
+## מודל ההרשאות
+
+לכל חבר יש אובייקט `permissions`:
+
+| הרשאה | משמעות |
+|-------|--------|
+| `canCreateTasks` | יצירת משימות |
+| `canAssignTasks` | שיוך אחראים |
+| `canEditTasks` | עריכת משימות |
+| `canCompleteAnyTask` | סימון כל משימה כבוצעה (אחרת: רק משימות שהוקצו לו) |
+| `canDeleteTasks` | מחיקת משימות |
+| `canManageMembers` | הזמנה וניהול של בני המשפחה |
+
+בעל החשבון (`isOwner`) מקבל את כל ההרשאות אוטומטית ואי אפשר לשלול ממנו.
+
+## תהליך עבודה: dev → main
+
+> **חשוב:** כל פיתוח או שינוי קוד עולה קודם לסביבת **dev** (הענף `claude/household-tasks-app-iheat4`),
+> ורק לאחר אישור מפורש שהכול תקין — ממזגים ל-`main`.
+
+- פיתוח וקומיטים: ענף `claude/household-tasks-app-iheat4`
+- דחיפה ל-dev בלבד; **לא** דוחפים ישירות ל-`main`
+- מיזוג ל-`main` רק לאחר אישור ידני
+
+## הערות והרחבות עתידיות
+
+- **שליחת מייל הזמנה בפועל** אינה כלולה בשלב זה — ההזמנה מותאמת לפי אימייל ומופיעה למוזמן בכניסה למערכת.
+  שליחת מייל אמיתי תדרוש Cloud Function (הרחבה עתידית).
+- **הקשחת צירוף-עצמי לחשבון**: חוקי האבטחה מונעים הענקת הרשאות בעלים בחשבון של אחר, אך אכיפת "קיום הזמנה תואמת"
+  מלאה לצירוף-עצמי היא הקשחה עתידית (דורשת מזהי הזמנה דטרמיניסטיים או Cloud Function).
