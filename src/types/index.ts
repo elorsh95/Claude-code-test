@@ -30,6 +30,16 @@ export interface Household {
   createdAt?: Timestamp;
 }
 
+/** רשומת חברות דנורמלית תחת המשתמש: users/{uid}/memberships/{householdId} */
+export interface Membership {
+  householdId: string;
+  householdName: string;
+  role: string;
+  position: string;
+  isOwner: boolean;
+  joinedAt?: Timestamp;
+}
+
 /** חבר בתוך חשבון משפחתי */
 export interface Member {
   userId: string;

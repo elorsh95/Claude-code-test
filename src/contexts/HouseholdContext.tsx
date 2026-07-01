@@ -19,6 +19,7 @@ const ACTIVE_KEY = 'active_household_id';
 
 interface HouseholdContextValue {
   loading: boolean;
+  error: string | null;
   households: Household[];
   activeHousehold: Household | null;
   currentMember: Member | null;
@@ -35,6 +36,7 @@ const HouseholdContext = createContext<HouseholdContextValue | undefined>(
 export function HouseholdProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [households, setHouseholds] = useState<Household[]>([]);
   const [activeId, setActiveId] = useState<string | null>(
     () => localStorage.getItem(ACTIVE_KEY)
@@ -49,13 +51,21 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
       return;
     }
     setLoading(true);
-    const list = await getUserHouseholds(user.uid);
-    setHouseholds(list);
-    setActiveId((prev) => {
-      if (prev && list.some((h) => h.id === prev)) return prev;
-      return list.length > 0 ? list[0].id : null;
-    });
-    setLoading(false);
+    setError(null);
+    try {
+      const list = await getUserHouseholds(user.uid);
+      setHouseholds(list);
+      setActiveId((prev) => {
+        if (prev && list.some((h) => h.id === prev)) return prev;
+        return list.length > 0 ? list[0].id : null;
+      });
+    } catch (err) {
+      console.error('שגיאה בטעינת החשבונות:', err);
+      setError('שגיאה בטעינת החשבונות. בדוק את החיבור ונסה לרענן.');
+      setHouseholds([]);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -108,6 +118,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     <HouseholdContext.Provider
       value={{
         loading,
+        error,
         households,
         activeHousehold,
         currentMember,

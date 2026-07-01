@@ -12,6 +12,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { writeMembership } from './households';
 import type { AppUser, Invitation, Member, Permissions } from '../types';
 
 interface CreateInviteInput {
@@ -29,16 +30,18 @@ interface CreateInviteInput {
 export async function createInvitation(input: CreateInviteInput): Promise<void> {
   const email = input.email.trim().toLowerCase();
 
-  // מניעת כפילויות: הזמנה ממתינה קיימת לאותו אימייל באותו חשבון
+  // מניעת כפילויות: שאילתת שדה-יחיד (householdId) + סינון בקוד - ללא אינדקס מורכב
   const existing = await getDocs(
     query(
       collection(db, 'invitations'),
-      where('householdId', '==', input.householdId),
-      where('email', '==', email),
-      where('status', '==', 'pending')
+      where('householdId', '==', input.householdId)
     )
   );
-  if (!existing.empty) {
+  const dup = existing.docs.some((d) => {
+    const data = d.data() as Invitation;
+    return data.email === email && data.status === 'pending';
+  });
+  if (dup) {
     throw new Error('כבר קיימת הזמנה ממתינה לאימייל הזה');
   }
 
@@ -61,14 +64,16 @@ export function subscribePendingInvitations(
   email: string,
   callback: (invites: Invitation[]) => void
 ): () => void {
+  // שאילתת שדה-יחיד (email) + סינון pending בקוד - ללא אינדקס מורכב
   const q = query(
     collection(db, 'invitations'),
-    where('email', '==', email.toLowerCase()),
-    where('status', '==', 'pending')
+    where('email', '==', email.toLowerCase())
   );
   return onSnapshot(q, (snap) => {
     callback(
-      snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
+      snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
+        .filter((inv) => inv.status === 'pending')
     );
   });
 }
@@ -78,14 +83,16 @@ export function subscribeHouseholdInvitations(
   householdId: string,
   callback: (invites: Invitation[]) => void
 ): () => void {
+  // שאילתת שדה-יחיד (householdId) + סינון pending בקוד - ללא אינדקס מורכב
   const q = query(
     collection(db, 'invitations'),
-    where('householdId', '==', householdId),
-    where('status', '==', 'pending')
+    where('householdId', '==', householdId)
   );
   return onSnapshot(q, (snap) => {
     callback(
-      snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
+      snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
+        .filter((inv) => inv.status === 'pending')
     );
   });
 }
@@ -113,6 +120,16 @@ export async function acceptInvitation(
     invitedBy: invite.invitedBy,
   };
   await setDoc(memberRef, { ...member, joinedAt: serverTimestamp() });
+
+  // רשומת חברות תחת המשתמש - מקור האמת לרשימת "החשבונות שלי"
+  await writeMembership(user.uid, {
+    householdId: invite.householdId,
+    householdName: invite.householdName,
+    role: invite.role,
+    position: invite.position,
+    isOwner: false,
+  });
+
   await updateDoc(doc(db, 'invitations', invite.id), { status: 'accepted' });
 }
 

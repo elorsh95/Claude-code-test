@@ -39,6 +39,11 @@ service cloud.firestore {
       // מזוהים יכולים לקרוא פרטי משתמש בסיסיים (לצורך תצוגת שמות)
       allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == uid;
+
+      // רשומות החברות הפרטיות של המשתמש (מקור האמת ל"החשבונות שלי")
+      match /memberships/{hid} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // ===== חשבונות משפחתיים =====

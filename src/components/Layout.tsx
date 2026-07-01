@@ -8,7 +8,7 @@ import type { Invitation } from '../types';
 
 function LayoutInner() {
   const { user, logout } = useAuth();
-  const { loading, activeHousehold, households } = useHousehold();
+  const { loading, error, activeHousehold, households } = useHousehold();
   const [pending, setPending] = useState<Invitation[]>([]);
   const location = useLocation();
 
@@ -21,6 +21,25 @@ function LayoutInner() {
     return (
       <div className="loading-screen">
         <div className="spinner" />
+      </div>
+    );
+  }
+
+  // שגיאת טעינה -> הודעה עם אפשרות רענון (במקום ספינר אינסופי)
+  if (error) {
+    return (
+      <div className="auth-wrap">
+        <div className="auth-card">
+          <div className="error-banner">{error}</div>
+          <button className="btn btn-block" onClick={() => window.location.reload()}>
+            רענון
+          </button>
+          <p className="auth-switch">
+            <button className="btn-ghost btn btn-sm" onClick={() => logout()}>
+              התנתקות
+            </button>
+          </p>
+        </div>
       </div>
     );
   }

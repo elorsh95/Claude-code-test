@@ -38,10 +38,16 @@ export async function updateMember(
   });
 }
 
-/** הסרת חבר מהחשבון */
+/** הסרת חבר מהחשבון (כולל רשומת החברות הפרטית שלו) */
 export async function removeMember(
   householdId: string,
   userId: string
 ): Promise<void> {
   await deleteDoc(doc(db, 'households', householdId, 'members', userId));
+  // מחיקת רשומת החברות הדנורמלית תחת המשתמש
+  await deleteDoc(doc(db, 'users', userId, 'memberships', householdId)).catch(
+    () => {
+      /* ייתכן שאין הרשאה למחוק תת-אוסף של משתמש אחר - לא קריטי */
+    }
+  );
 }
