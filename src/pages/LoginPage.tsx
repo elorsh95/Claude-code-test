@@ -44,7 +44,10 @@ export function LoginPage() {
     setBusy(true);
     try {
       await withTimeout(resetPassword(email.trim()));
-      setInfo('נשלח אליך מייל לאיפוס סיסמה. בדוק את תיבת הדואר (וגם ספאם).');
+      // הודעה ניטרלית: Firebase מסתיר אם החשבון קיים (הגנה מפני חשיפת משתמשים)
+      setInfo(
+        'אם קיים חשבון עם האימייל הזה — יישלח אליו מייל לאיפוס סיסמה. בדוק את תיבת הדואר (וגם ספאם).'
+      );
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
       if (code === 'auth/user-not-found') {
