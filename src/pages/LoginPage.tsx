@@ -46,7 +46,14 @@ export function LoginPage() {
       await withTimeout(resetPassword(email.trim()));
       setInfo('נשלח אליך מייל לאיפוס סיסמה. בדוק את תיבת הדואר (וגם ספאם).');
     } catch (err) {
-      setError(mapAuthError(err));
+      const code = (err as { code?: string })?.code ?? '';
+      if (code === 'auth/user-not-found') {
+        setError('לא נמצא חשבון עם האימייל הזה');
+      } else if (code === 'auth/invalid-email') {
+        setError('כתובת אימייל לא תקינה');
+      } else {
+        setError(mapAuthError(err));
+      }
     } finally {
       setBusy(false);
     }
