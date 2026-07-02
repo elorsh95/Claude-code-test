@@ -65,7 +65,8 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
       setResendIn(60);
     } catch (err) {
       console.error('Phone auth error:', err);
-      setError(mapAuthError(err));
+      const code = (err as { code?: string })?.code ?? '';
+      setError(`${mapAuthError(err)}${code ? ` [${code}]` : ''}`);
       resetVerifier();
     } finally {
       setBusy(false);
