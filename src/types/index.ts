@@ -70,6 +70,9 @@ export type TaskStatus = 'open' | 'done';
 /** תדירות חזרה של משימה */
 export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly';
 
+/** עדיפות משימה */
+export type TaskPriority = 'low' | 'normal' | 'high';
+
 /** משימה */
 export interface Task {
   id: string;
@@ -87,6 +90,8 @@ export interface Task {
   recurrence?: RecurrenceType;
   /** ניקוד שמוענק על ביצוע */
   points?: number;
+  /** עדיפות (ברירת מחדל: רגיל) */
+  priority?: TaskPriority;
 }
 
 /** רשומת ביצוע - לצבירת נקודות (עובד גם למשימות חוזרות) */

@@ -5,7 +5,7 @@ import { useHousehold } from '../contexts/HouseholdContext';
 import { createTask, deleteTask, updateTask } from '../lib/tasks';
 import { hasPermission } from '../lib/permissions';
 import { dateInputToDate, dateToInputValue } from '../lib/format';
-import type { RecurrenceType, Task } from '../types';
+import type { RecurrenceType, Task, TaskPriority } from '../types';
 
 interface Props {
   task?: Task | null;
@@ -29,6 +29,9 @@ export function TaskFormModal({ task, onClose }: Props) {
     task?.recurrence ?? 'none'
   );
   const [points, setPoints] = useState(String(task?.points ?? 0));
+  const [priority, setPriority] = useState<TaskPriority>(
+    task?.priority ?? 'normal'
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -83,6 +86,7 @@ export function TaskFormModal({ task, onClose }: Props) {
             dueDate: due,
             recurrence,
             points: pts,
+            priority,
           },
           actor
         );
@@ -97,6 +101,7 @@ export function TaskFormModal({ task, onClose }: Props) {
             dueDate: due,
             recurrence,
             points: pts,
+            priority,
           },
           actor
         );
@@ -142,6 +147,19 @@ export function TaskFormModal({ task, onClose }: Props) {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
           />
+        </div>
+
+        <div className="field">
+          <label htmlFor="priority">עדיפות</label>
+          <select
+            id="priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as TaskPriority)}
+          >
+            <option value="high">דחוף</option>
+            <option value="normal">רגיל</option>
+            <option value="low">נמוך</option>
+          </select>
         </div>
 
         <div className="field">

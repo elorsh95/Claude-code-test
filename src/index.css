@@ -720,6 +720,84 @@ a {
   box-shadow: var(--shadow-lg);
 }
 
+/* ===== Calendar ===== */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.cal-month {
+  font-weight: 700;
+  min-width: 8rem;
+  text-align: center;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-head {
+  margin-bottom: 4px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 0.2rem 0;
+}
+
+.cal-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--text);
+  padding: 0;
+}
+
+.cal-cell.empty {
+  background: transparent;
+  border: none;
+}
+
+.cal-cell.today {
+  border-color: var(--primary);
+}
+
+.cal-cell.selected {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.cal-dot {
+  position: absolute;
+  bottom: 3px;
+  inset-inline-end: 3px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
 /* ===== Legal pages ===== */
 .legal h2 {
   font-size: 1.05rem;

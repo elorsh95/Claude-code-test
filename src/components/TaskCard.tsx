@@ -20,6 +20,12 @@ const RECURRENCE_LABEL: Record<RecurrenceType, string> = {
   monthly: 'חודשי',
 };
 
+const PRIORITY_CHIP: Record<string, { label: string; bg: string; color: string } | null> = {
+  high: { label: '🔴 דחוף', bg: '#fee2e2', color: 'var(--danger)' },
+  normal: null,
+  low: { label: '⚪ נמוך', bg: 'var(--border)', color: 'var(--text-muted)' },
+};
+
 export function TaskCard({ task, onInfo, onEdit }: Props) {
   const { user } = useAuth();
   const { activeHousehold, members, currentMember } = useHousehold();
@@ -111,6 +117,17 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
                 👤 {m!.displayName}
               </span>
             ))
+          )}
+          {PRIORITY_CHIP[task.priority ?? 'normal'] && (
+            <span
+              className="chip"
+              style={{
+                background: PRIORITY_CHIP[task.priority!]!.bg,
+                color: PRIORITY_CHIP[task.priority!]!.color,
+              }}
+            >
+              {PRIORITY_CHIP[task.priority!]!.label}
+            </span>
           )}
           {points > 0 && <span className="chip">⭐ {points}</span>}
           {recurrence !== 'none' && (

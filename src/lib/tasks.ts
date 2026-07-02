@@ -20,6 +20,7 @@ import type {
   RecurrenceType,
   Task,
   TaskHistoryEvent,
+  TaskPriority,
 } from '../types';
 
 interface Actor {
@@ -125,6 +126,7 @@ interface CreateTaskInput {
   dueDate: Date | null;
   recurrence: RecurrenceType;
   points: number;
+  priority: TaskPriority;
 }
 
 /** יצירת משימה חדשה + רישום אירועי היסטוריה */
@@ -145,6 +147,7 @@ export async function createTask(
     dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
     recurrence: input.recurrence,
     points: input.points,
+    priority: input.priority,
   });
 
   await logHistory(householdId, ref.id, 'created', actor, 'המשימה נוצרה');
@@ -171,6 +174,7 @@ interface UpdateTaskInput {
   dueDate: Date | null;
   recurrence: RecurrenceType;
   points: number;
+  priority: TaskPriority;
 }
 
 /** עדכון פרטי משימה + רישום היסטוריה */
@@ -187,6 +191,7 @@ export async function updateTask(
     dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
     recurrence: input.recurrence,
     points: input.points,
+    priority: input.priority,
   });
   await logHistory(householdId, taskId, 'updated', actor, 'פרטי המשימה עודכנו');
   if (input.assigneesChanged) {
