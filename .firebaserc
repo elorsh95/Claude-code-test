@@ -1,5 +1,13 @@
 {
   "projects": {
-    "default": "household-tasks-demo"
+    "default": "house-hold-tasks-587ef"
+  },
+  "targets": {
+    "house-hold-tasks-587ef": {
+      "hosting": {
+        "prod": ["house-hold-tasks-587ef"],
+        "dev": ["household-tasks-587ef-dev"]
+      }
+    }
   }
 }
