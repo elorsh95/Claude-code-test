@@ -6,6 +6,7 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { MembersPage } from './pages/MembersPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { InvitationsPage } from './pages/InvitationsPage';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
+      { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'members', element: <MembersPage /> },
       { path: 'invitations', element: <InvitationsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },

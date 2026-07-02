@@ -84,6 +84,10 @@ function LayoutInner() {
           <span className="icon">📋</span>
           משימות
         </NavLink>
+        <NavLink to="/leaderboard">
+          <span className="icon">🏆</span>
+          ניקוד
+        </NavLink>
         <NavLink to="/members">
           <span className="icon">👨‍👩‍👧‍👦</span>
           המשפחה
