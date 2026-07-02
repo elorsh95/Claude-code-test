@@ -71,6 +71,17 @@ export function maskContact(
   return `${shown}***@${domain}`;
 }
 
+/** המרת מספר טלפון לפורמט E.164 (למשל +972501234567). ברירת מחדל: ישראל */
+export function toE164(phone: string, countryCode = '972'): string {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith('+')) return '+' + trimmed.slice(1).replace(/\D/g, '');
+  let d = phone.replace(/\D/g, '');
+  if (d.startsWith('00')) return '+' + d.slice(2);
+  if (d.startsWith(countryCode)) return '+' + d;
+  if (d.startsWith('0')) d = d.slice(1);
+  return '+' + countryCode + d;
+}
+
 /** תאריך בלבד (ללא שעה) בעברית */
 export function formatDate(ts?: Timestamp | null): string {
   if (!ts) return '';

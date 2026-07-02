@@ -2,22 +2,24 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
+import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
 
 export function LoginPage() {
   const { login, user, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
+  const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
 
-  // אם כבר מחוברים - מעבר אוטומטי (בתוך effect, לא בזמן render)
+  // אם כבר מחוברים - מעבר אוטומטי (רק במצב אימייל; במצב טלפון הפאנל מנווט בעצמו)
   useEffect(() => {
-    if (user) navigate(redirect, { replace: true });
-  }, [user, redirect, navigate]);
+    if (user && method === 'email') navigate(redirect, { replace: true });
+  }, [user, method, redirect, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +71,27 @@ export function LoginPage() {
         <h2>התחברות</h2>
         <p className="subtitle">משימות המשפחה — ניהול משק הבית ביחד</p>
 
+        <div className="filter-tabs" style={{ marginBottom: '1.2rem' }}>
+          <button
+            type="button"
+            className={method === 'email' ? 'active' : ''}
+            onClick={() => setMethod('email')}
+          >
+            אימייל
+          </button>
+          <button
+            type="button"
+            className={method === 'phone' ? 'active' : ''}
+            onClick={() => setMethod('phone')}
+          >
+            טלפון
+          </button>
+        </div>
+
+        {method === 'phone' ? (
+          <PhoneAuthPanel redirect={redirect} />
+        ) : (
+          <>
         {error && <div className="error-banner">{error}</div>}
         {info && <div className="info-banner">{info}</div>}
 
@@ -110,6 +133,8 @@ export function LoginPage() {
             שכחתי סיסמה
           </button>
         </p>
+          </>
+        )}
 
         <p className="auth-switch">
           אין לך חשבון?{' '}
@@ -144,6 +169,18 @@ export function mapAuthError(err: unknown): string {
       return 'יותר מדי ניסיונות. נסה שוב מאוחר יותר';
     case 'auth/network-request-failed':
       return 'בעיית רשת. בדוק את החיבור לאינטרנט ונסה שוב';
+    case 'auth/invalid-phone-number':
+      return 'מספר טלפון לא תקין';
+    case 'auth/missing-phone-number':
+      return 'יש להזין מספר טלפון';
+    case 'auth/invalid-verification-code':
+      return 'הקוד שהוזן שגוי';
+    case 'auth/code-expired':
+      return 'הקוד פג תוקף. שלח קוד חדש';
+    case 'auth/quota-exceeded':
+      return 'חרגת ממכסת ההודעות. נסה מאוחר יותר';
+    case 'auth/operation-not-allowed':
+      return 'התחברות זו אינה מופעלת. יש להפעילה בקונסולת Firebase';
     default:
       if ((err as Error)?.message === 'timeout') {
         return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';

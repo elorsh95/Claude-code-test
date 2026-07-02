@@ -30,15 +30,21 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  /** רענון פרטי המשתמש מ-Firebase (למשל אחרי עדכון שם בהתחברות טלפון) */
+  reloadUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 function toAppUser(fbUser: FirebaseUser): AppUser {
+  const fallback = fbUser.email
+    ? fbUser.email.split('@')[0]
+    : fbUser.phoneNumber ?? 'משתמש';
   return {
     uid: fbUser.uid,
     email: fbUser.email ?? '',
-    displayName: fbUser.displayName ?? (fbUser.email ?? '').split('@')[0],
+    displayName: fbUser.displayName ?? fallback,
+    phone: fbUser.phoneNumber ?? undefined,
   };
 }
 
@@ -85,9 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   }
 
+  function reloadUser() {
+    if (auth.currentUser) setUser(toAppUser(auth.currentUser));
+  }
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, register, login, logout, resetPassword }}
+      value={{
+        user,
+        loading,
+        register,
+        login,
+        logout,
+        resetPassword,
+        reloadUser,
+      }}
     >
       {children}
     </AuthContext.Provider>
