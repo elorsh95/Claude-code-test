@@ -114,18 +114,15 @@ service cloud.firestore {
       }
     }
 
-    // ===== הזמנות =====
+    // ===== הזמנות (מבוססות-קישור) =====
+    // מזהה ההזמנה הוא אקראי ובלתי-ניחוש (Firestore auto-id), ומשמש כ"סוד"
+    // שבקישור. לכן כל משתמש מזוהה שמחזיק בקישור רשאי לקרוא ולאשר את ההזמנה.
     match /invitations/{invId} {
-      allow read: if isSignedIn() && (
-        resource.data.email == request.auth.token.email ||
-        perm(resource.data.householdId, 'canManageMembers')
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn() &&
         perm(request.resource.data.householdId, 'canManageMembers');
-      allow update: if isSignedIn() && (
-        resource.data.email == request.auth.token.email ||
-        perm(resource.data.householdId, 'canManageMembers')
-      );
+      // עדכון סטטוס (accepted/declined) ע"י מי שמצטרף דרך הקישור, או ניהול ע"י מנהל
+      allow update: if isSignedIn();
       allow delete: if isSignedIn() &&
         perm(resource.data.householdId, 'canManageMembers');
     }

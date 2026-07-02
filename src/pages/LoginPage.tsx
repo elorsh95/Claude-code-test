@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export function LoginPage() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   if (user) {
-    navigate('/', { replace: true });
+    navigate(redirect, { replace: true });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -20,7 +22,7 @@ export function LoginPage() {
     setError('');
     try {
       await login(email.trim(), password);
-      navigate('/', { replace: true });
+      navigate(redirect, { replace: true });
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -66,7 +68,10 @@ export function LoginPage() {
         </form>
 
         <p className="auth-switch">
-          אין לך חשבון? <Link to="/register">הרשמה</Link>
+          אין לך חשבון?{' '}
+          <Link to={`/register?redirect=${encodeURIComponent(redirect)}`}>
+            הרשמה
+          </Link>
         </p>
       </div>
     </div>

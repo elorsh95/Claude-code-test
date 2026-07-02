@@ -3,7 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
-  getDocs,
+  getDoc,
   onSnapshot,
   query,
   serverTimestamp,
@@ -18,7 +18,6 @@ import type { AppUser, Invitation, Member, Permissions } from '../types';
 interface CreateInviteInput {
   householdId: string;
   householdName: string;
-  email: string;
   role: string;
   position: string;
   permissions: Permissions;
@@ -26,29 +25,17 @@ interface CreateInviteInput {
   invitedByName: string;
 }
 
-/** יצירת הזמנה חדשה לחבר משפחה (לפי אימייל) */
-export async function createInvitation(input: CreateInviteInput): Promise<void> {
-  const email = input.email.trim().toLowerCase();
-
-  // מניעת כפילויות: שאילתת שדה-יחיד (householdId) + סינון בקוד - ללא אינדקס מורכב
-  const existing = await getDocs(
-    query(
-      collection(db, 'invitations'),
-      where('householdId', '==', input.householdId)
-    )
-  );
-  const dup = existing.docs.some((d) => {
-    const data = d.data() as Invitation;
-    return data.email === email && data.status === 'pending';
-  });
-  if (dup) {
-    throw new Error('כבר קיימת הזמנה ממתינה לאימייל הזה');
-  }
-
-  await addDoc(collection(db, 'invitations'), {
+/**
+ * יצירת קישור הזמנה חדש (link-based) עם תפקיד והרשאות מוגדרים מראש.
+ * מחזיר את מזהה ההזמנה, שממנו נבנה הקישור לשיתוף.
+ */
+export async function createInvitation(
+  input: CreateInviteInput
+): Promise<string> {
+  const ref = await addDoc(collection(db, 'invitations'), {
     householdId: input.householdId,
     householdName: input.householdName,
-    email,
+    email: '', // הזמנה מבוססת-קישור: לא קשורה לאימייל מסוים
     role: input.role,
     position: input.position,
     permissions: input.permissions,
@@ -57,6 +44,21 @@ export async function createInvitation(input: CreateInviteInput): Promise<void> 
     invitedByName: input.invitedByName,
     createdAt: serverTimestamp(),
   });
+  return ref.id;
+}
+
+/** בניית קישור הזמנה לשיתוף מתוך מזהה ההזמנה */
+export function buildInviteLink(inviteId: string): string {
+  return `${window.location.origin}/join/${inviteId}`;
+}
+
+/** שליפת הזמנה בודדת לפי מזהה (לעמוד ההצטרפות) */
+export async function getInvitation(
+  inviteId: string
+): Promise<Invitation | null> {
+  const snap = await getDoc(doc(db, 'invitations', inviteId));
+  if (!snap.exists()) return null;
+  return { id: snap.id, ...(snap.data() as Omit<Invitation, 'id'>) };
 }
 
 /** מאזין להזמנות הממתינות של המשתמש הנוכחי (לפי אימייל) */

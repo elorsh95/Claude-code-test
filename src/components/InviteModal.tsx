@@ -3,7 +3,7 @@ import { Modal } from './Modal';
 import { PermissionsEditor } from './PermissionsEditor';
 import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
-import { createInvitation } from '../lib/invitations';
+import { buildInviteLink, createInvitation } from '../lib/invitations';
 import { PRESETS } from '../lib/permissions';
 import type { Permissions } from '../types';
 
@@ -12,7 +12,6 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
   const { activeHousehold } = useHousehold();
 
   const adultPreset = PRESETS.find((p) => p.id === 'adult')!;
-  const [email, setEmail] = useState('');
   const [role, setRole] = useState(adultPreset.role);
   const [position, setPosition] = useState(adultPreset.position);
   const [permissions, setPermissions] = useState<Permissions>({
@@ -20,40 +19,75 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState(false);
+  const [link, setLink] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || !activeHousehold || !email.trim()) return;
+    if (!user || !activeHousehold) return;
     setBusy(true);
     setError('');
     try {
-      await createInvitation({
+      const inviteId = await createInvitation({
         householdId: activeHousehold.id,
         householdName: activeHousehold.name,
-        email,
         role,
         position,
         permissions,
         invitedBy: user.uid,
         invitedByName: user.displayName,
       });
-      setDone(true);
+      setLink(buildInviteLink(inviteId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה בשליחת ההזמנה');
+      setError(err instanceof Error ? err.message : 'שגיאה ביצירת הקישור');
     } finally {
       setBusy(false);
     }
   }
 
-  if (done) {
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('לא ניתן להעתיק אוטומטית — סמן והעתק ידנית');
+    }
+  }
+
+  const waText = encodeURIComponent(
+    `הוזמנת להצטרף ל"${activeHousehold?.name}" באפליקציית משימות המשפחה 🏠\n` +
+      `הצטרפות בקישור: ${link}`
+  );
+  const waHref = `https://wa.me/?text=${waText}`;
+
+  if (link) {
     return (
-      <Modal title="ההזמנה נשלחה" onClose={onClose}>
+      <Modal title="קישור ההזמנה מוכן" onClose={onClose}>
         <div className="info-banner">
-          נשלחה הזמנה אל <strong>{email}</strong>. ברגע שהמשתמש יירשם או יתחבר
-          עם אימייל זה, ההזמנה תופיע לו לאישור.
+          שתף את הקישור עם בן המשפחה. מי שיפתח אותו ויתחבר/יירשם — יצטרף לחשבון
+          בתפקיד <strong>{role}</strong> עם ההרשאות שהגדרת.
         </div>
-        <button className="btn btn-block" onClick={onClose}>
+
+        <div className="field">
+          <label>קישור ההזמנה</label>
+          <input type="text" value={link} readOnly onFocus={(e) => e.target.select()} />
+        </div>
+
+        <div className="modal-actions">
+          <a className="btn" href={waHref} target="_blank" rel="noreferrer">
+            שיתוף בוואטסאפ
+          </a>
+          <button className="btn btn-secondary" type="button" onClick={copyLink}>
+            {copied ? '✓ הועתק' : 'העתקת קישור'}
+          </button>
+        </div>
+
+        <button
+          className="btn btn-ghost btn-block"
+          onClick={onClose}
+          style={{ marginTop: '0.6rem' }}
+        >
           סגירה
         </button>
       </Modal>
@@ -63,20 +97,10 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="הזמנת בן משפחה" onClose={onClose}>
       {error && <div className="error-banner">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="field">
-          <label htmlFor="invite-email">אימייל של המוזמן</label>
-          <input
-            id="invite-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@example.com"
-            required
-            autoFocus
-          />
-        </div>
-
+      <p className="member-sub" style={{ marginBottom: '1rem' }}>
+        הגדר תפקיד והרשאות, וקבל קישור לשיתוף בוואטסאפ.
+      </p>
+      <form onSubmit={handleCreate}>
         <PermissionsEditor
           role={role}
           position={position}
@@ -87,8 +111,8 @@ export function InviteModal({ onClose }: { onClose: () => void }) {
         />
 
         <div className="modal-actions">
-          <button className="btn" type="submit" disabled={busy || !email.trim()}>
-            שליחת הזמנה
+          <button className="btn" type="submit" disabled={busy}>
+            {busy ? 'יוצר…' : 'יצירת קישור הזמנה'}
           </button>
           <button
             className="btn btn-ghost"

@@ -69,9 +69,9 @@ export function MembersPage() {
                 ✉️
               </div>
               <div className="member-info">
-                <div className="member-name">{inv.email}</div>
+                <div className="member-name">קישור הזמנה</div>
                 <div className="member-sub">
-                  ממתין לאישור · תפקיד: {inv.role}
+                  ממתין להצטרפות · תפקיד: {inv.role}
                 </div>
               </div>
               <button
