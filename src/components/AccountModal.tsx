@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
 import { updateMemberName } from '../lib/members';
 import { mapAuthError } from '../lib/authErrors';
+import { getThemePref, setThemePref, type ThemePref } from '../lib/theme';
 
 export function AccountModal({ onClose }: { onClose: () => void }) {
   const {
@@ -22,6 +23,12 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [theme, setTheme] = useState<ThemePref>(getThemePref());
+
+  function chooseTheme(t: ThemePref) {
+    setTheme(t);
+    setThemePref(t);
+  }
 
   async function handleSaveName(e: React.FormEvent) {
     e.preventDefault();
@@ -138,6 +145,35 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
           לחשבון זה אין אימייל, לכן לא ניתן לקבוע סיסמה.
         </div>
       )}
+
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
+
+      <div className="field">
+        <label>מראה</label>
+        <div className="filter-tabs">
+          <button
+            type="button"
+            className={theme === 'system' ? 'active' : ''}
+            onClick={() => chooseTheme('system')}
+          >
+            🖥️ מערכת
+          </button>
+          <button
+            type="button"
+            className={theme === 'light' ? 'active' : ''}
+            onClick={() => chooseTheme('light')}
+          >
+            ☀️ בהיר
+          </button>
+          <button
+            type="button"
+            className={theme === 'dark' ? 'active' : ''}
+            onClick={() => chooseTheme('dark')}
+          >
+            🌙 כהה
+          </button>
+        </div>
+      </div>
 
       <button
         className="btn btn-ghost btn-block"
