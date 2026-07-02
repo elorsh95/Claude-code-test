@@ -157,6 +157,9 @@ export function LoginPage() {
           <Link to="/privacy">מדיניות פרטיות</Link> ·{' '}
           <Link to="/terms">תנאי שימוש</Link>
         </p>
+        <p className="auth-legal" style={{ opacity: 0.5 }}>
+          גרסה {__BUILD_ID__}
+        </p>
       </div>
     </div>
   );
