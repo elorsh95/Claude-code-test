@@ -13,6 +13,17 @@ export function formatDateTime(ts?: Timestamp | null): string {
   }).format(date);
 }
 
+/**
+ * נרמול מספר טלפון להשוואה: ספרות בלבד, ללא קידומת מדינה (972) ואפס מוביל.
+ * למשל "054-123-4567", "+972 54 1234567" → "541234567".
+ */
+export function normalizePhone(phone: string): string {
+  let d = phone.replace(/\D/g, '');
+  if (d.startsWith('972')) d = d.slice(3);
+  if (d.startsWith('0')) d = d.slice(1);
+  return d;
+}
+
 /** ראשי תיבות משם לתצוגת אווטאר */
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);

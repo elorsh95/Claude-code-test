@@ -20,7 +20,12 @@ import type { AppUser } from '../types';
 interface AuthContextValue {
   user: AppUser | null;
   loading: boolean;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -47,10 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
-  async function register(name: string, email: string, password: string) {
+  async function register(
+    name: string,
+    email: string,
+    password: string,
+    phone?: string
+  ) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    const appUser = { ...toAppUser(cred.user), displayName: name };
+    const appUser = {
+      ...toAppUser(cred.user),
+      displayName: name,
+      phone: phone?.trim() || undefined,
+    };
     await upsertUser(appUser);
     setUser(appUser);
   }

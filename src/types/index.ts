@@ -19,6 +19,7 @@ export interface AppUser {
   uid: string;
   email: string;
   displayName: string;
+  phone?: string;
   createdAt?: Timestamp;
 }
 
@@ -89,12 +90,20 @@ export interface TaskHistoryEvent {
 
 export type InvitationStatus = 'pending' | 'accepted' | 'declined';
 
-/** הזמנה להצטרף לחשבון משפחתי */
+/** אמצעי הקשר שאליו נעולה ההזמנה */
+export type ContactType = 'email' | 'phone';
+
+/** הזמנה להצטרף לחשבון משפחתי (נעולה לאיש ספציפי לפי מייל/טלפון) */
 export interface Invitation {
   id: string;
   householdId: string;
   householdName: string;
-  email: string;
+  /** סוג אמצעי הקשר שאליו ההזמנה נעולה */
+  contactType: ContactType;
+  /** הערך המנורמל (מייל באותיות קטנות / טלפון ספרות בלבד) */
+  contactValue: string;
+  /** התצוגה המקורית שהוזנה (לתצוגה למנהל) */
+  contactDisplay: string;
   role: string;
   position: string;
   permissions: Permissions;

@@ -2,17 +2,21 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { acceptInvitation, getInvitation } from '../lib/invitations';
+import { getUserPhone } from '../lib/households';
+import { normalizePhone } from '../lib/format';
 import type { Invitation } from '../types';
 
 export function JoinPage() {
   const { inviteId } = useParams<{ inviteId: string }>();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
 
   const [invite, setInvite] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // null = בודק, true/false = תוצאת ההתאמה
+  const [contactOk, setContactOk] = useState<boolean | null>(null);
 
   const redirect = `/join/${inviteId}`;
 
@@ -23,6 +27,28 @@ export function JoinPage() {
       .catch(() => setError('שגיאה בטעינת ההזמנה'))
       .finally(() => setLoading(false));
   }, [inviteId]);
+
+  // אימות רך: האם המשתמש המחובר תואם למייל/טלפון שההזמנה נעולה אליו
+  useEffect(() => {
+    if (!user || !invite || invite.status !== 'pending') {
+      setContactOk(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      if (invite.contactType === 'email') {
+        if (!cancelled)
+          setContactOk(user.email.toLowerCase() === invite.contactValue);
+      } else {
+        const phone = await getUserPhone(user.uid);
+        if (!cancelled)
+          setContactOk(normalizePhone(phone) === invite.contactValue);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, invite]);
 
   async function handleJoin() {
     if (!user || !invite) return;
@@ -44,6 +70,8 @@ export function JoinPage() {
       </div>
     );
   }
+
+  const contactLabel = invite?.contactType === 'phone' ? 'הטלפון' : 'האימייל';
 
   return (
     <div className="auth-wrap">
@@ -74,20 +102,17 @@ export function JoinPage() {
               {invite.position ? ` · ${invite.position}` : ''}
             </p>
 
+            <div className="info-banner">
+              הזמנה זו נעולה ל{contactLabel}:{' '}
+              <strong>{invite.contactDisplay}</strong>
+            </div>
+
             {error && <div className="error-banner">{error}</div>}
 
-            {user ? (
-              <button
-                className="btn btn-block"
-                onClick={handleJoin}
-                disabled={busy}
-              >
-                {busy ? 'מצטרף…' : `הצטרפות בתור ${user.displayName}`}
-              </button>
-            ) : (
+            {!user ? (
               <>
                 <div className="info-banner">
-                  כדי להצטרף, התחבר או הירשם תחילה.
+                  כדי להצטרף, התחבר או הירשם עם {contactLabel} הזה.
                 </div>
                 <Link
                   className="btn btn-block"
@@ -101,6 +126,31 @@ export function JoinPage() {
                     התחברות
                   </Link>
                 </p>
+              </>
+            ) : contactOk === null ? (
+              <div className="spinner" style={{ margin: '1rem auto' }} />
+            ) : contactOk ? (
+              <button
+                className="btn btn-block"
+                onClick={handleJoin}
+                disabled={busy}
+              >
+                {busy ? 'מצטרף…' : `הצטרפות בתור ${user.displayName}`}
+              </button>
+            ) : (
+              <>
+                <div className="error-banner">
+                  החשבון שאיתו התחברת ({user.email}) אינו תואם ל{contactLabel}{' '}
+                  שאליו נעולה ההזמנה.
+                  {invite.contactType === 'phone' &&
+                    ' ודא שנרשמת עם מספר הטלפון הנכון.'}
+                </div>
+                <button
+                  className="btn btn-block btn-secondary"
+                  onClick={() => logout()}
+                >
+                  התחברות עם חשבון אחר
+                </button>
               </>
             )}
           </>

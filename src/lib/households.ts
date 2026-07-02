@@ -23,19 +23,23 @@ export async function writeMembership(
 export async function upsertUser(user: AppUser): Promise<void> {
   const ref = doc(db, 'users', user.uid);
   const existing = await getDoc(ref);
+  const base: Record<string, unknown> = {
+    email: user.email,
+    displayName: user.displayName,
+  };
+  if (user.phone !== undefined) base.phone = user.phone;
   if (existing.exists()) {
-    await setDoc(
-      ref,
-      { email: user.email, displayName: user.displayName },
-      { merge: true }
-    );
+    await setDoc(ref, base, { merge: true });
   } else {
-    await setDoc(ref, {
-      email: user.email,
-      displayName: user.displayName,
-      createdAt: serverTimestamp(),
-    });
+    await setDoc(ref, { ...base, createdAt: serverTimestamp() });
   }
+}
+
+/** שליפת מספר הטלפון השמור של המשתמש (לצורך אימות הזמנה) */
+export async function getUserPhone(uid: string): Promise<string> {
+  const snap = await getDoc(doc(db, 'users', uid));
+  if (!snap.exists()) return '';
+  return (snap.data().phone as string | undefined) ?? '';
 }
 
 /**

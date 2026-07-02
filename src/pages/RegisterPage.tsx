@@ -10,6 +10,7 @@ export function RegisterPage() {
   const redirect = searchParams.get('redirect') || '/';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -23,7 +24,7 @@ export function RegisterPage() {
     setBusy(true);
     setError('');
     try {
-      await register(name.trim(), email.trim(), password);
+      await register(name.trim(), email.trim(), password, phone.trim());
       navigate(redirect, { replace: true });
     } catch (err) {
       setError(mapAuthError(err));
@@ -62,6 +63,18 @@ export function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="phone">טלפון (מומלץ — נדרש להזמנות לפי טלפון)</label>
+            <input
+              id="phone"
+              type="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              placeholder="050-1234567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </div>
           <div className="field">

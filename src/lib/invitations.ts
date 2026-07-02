@@ -13,11 +13,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { writeMembership } from './households';
-import type { AppUser, Invitation, Member, Permissions } from '../types';
+import type {
+  AppUser,
+  ContactType,
+  Invitation,
+  Member,
+  Permissions,
+} from '../types';
 
 interface CreateInviteInput {
   householdId: string;
   householdName: string;
+  contactType: ContactType;
+  contactValue: string; // מנורמל (מייל lowercase / טלפון ספרות)
+  contactDisplay: string; // הערך המקורי שהוזן
   role: string;
   position: string;
   permissions: Permissions;
@@ -26,7 +35,7 @@ interface CreateInviteInput {
 }
 
 /**
- * יצירת קישור הזמנה חדש (link-based) עם תפקיד והרשאות מוגדרים מראש.
+ * יצירת קישור הזמנה חדש, נעול לאיש ספציפי לפי מייל או טלפון.
  * מחזיר את מזהה ההזמנה, שממנו נבנה הקישור לשיתוף.
  */
 export async function createInvitation(
@@ -35,7 +44,9 @@ export async function createInvitation(
   const ref = await addDoc(collection(db, 'invitations'), {
     householdId: input.householdId,
     householdName: input.householdName,
-    email: '', // הזמנה מבוססת-קישור: לא קשורה לאימייל מסוים
+    contactType: input.contactType,
+    contactValue: input.contactValue,
+    contactDisplay: input.contactDisplay,
     role: input.role,
     position: input.position,
     permissions: input.permissions,
@@ -66,16 +77,16 @@ export function subscribePendingInvitations(
   email: string,
   callback: (invites: Invitation[]) => void
 ): () => void {
-  // שאילתת שדה-יחיד (email) + סינון pending בקוד - ללא אינדקס מורכב
+  // הזמנות המייל של המשתמש: שאילתת שדה-יחיד (contactValue) + סינון בקוד
   const q = query(
     collection(db, 'invitations'),
-    where('email', '==', email.toLowerCase())
+    where('contactValue', '==', email.toLowerCase())
   );
   return onSnapshot(q, (snap) => {
     callback(
       snap.docs
         .map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
-        .filter((inv) => inv.status === 'pending')
+        .filter((inv) => inv.contactType === 'email' && inv.status === 'pending')
     );
   });
 }

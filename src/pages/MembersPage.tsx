@@ -71,9 +71,10 @@ export function MembersPage() {
                 ✉️
               </div>
               <div className="member-info">
-                <div className="member-name">קישור הזמנה</div>
+                <div className="member-name">{inv.contactDisplay}</div>
                 <div className="member-sub">
-                  ממתין להצטרפות · תפקיד: {inv.role}
+                  ממתין להצטרפות · {inv.contactType === 'phone' ? 'טלפון' : 'מייל'}{' '}
+                  · תפקיד: {inv.role}
                 </div>
               </div>
               <div className="task-actions">
