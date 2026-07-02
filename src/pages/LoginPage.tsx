@@ -7,7 +7,8 @@ import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
 import { GoogleButton } from '../components/GoogleButton';
 
 export function LoginPage() {
-  const { login, user, resetPassword, authError, clearAuthError } = useAuth();
+  const { login, user, loading, resetPassword, authError, clearAuthError } =
+    useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
@@ -22,6 +23,16 @@ export function LoginPage() {
   useEffect(() => {
     if (user && method === 'email') navigate(redirect, { replace: true });
   }, [user, method, redirect, navigate]);
+
+  // בזמן פתרון מצב ההתחברות (כולל החזרה מ-Google) או כשכבר מחוברים -
+  // מציגים ספינר במקום טופס ההתחברות, כדי למנוע "הבזק" של מסך ההתחברות
+  if (loading || (user && method === 'email')) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

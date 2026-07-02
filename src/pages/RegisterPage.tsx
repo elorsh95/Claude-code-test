@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
@@ -7,7 +7,7 @@ import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
 import { mapAuthError } from '../lib/authErrors';
 
 export function RegisterPage() {
-  const { register } = useAuth();
+  const { register, user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
@@ -18,6 +18,20 @@ export function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // החזרה מ-Google (redirect) עשויה לנחות כאן - ננווט פנימה כשמתחברים
+  useEffect(() => {
+    if (user && method === 'email') navigate(redirect, { replace: true });
+  }, [user, method, redirect, navigate]);
+
+  // ספינר במקום "הבזק" של הטופס בזמן פתרון ההתחברות או כשכבר מחוברים
+  if (loading || (user && method === 'email')) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
