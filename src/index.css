@@ -564,19 +564,21 @@ a {
   position: absolute;
   height: 20px;
   width: 20px;
-  inset-inline-end: 3px;
+  inset-inline-start: 3px;
   top: 3px;
   background: #fff;
   border-radius: 50%;
-  transition: 0.2s;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2);
+  transition: inset-inline-start 0.2s;
 }
 
 .switch input:checked + .slider {
   background: var(--primary);
 }
 
+/* מזיז את העיגול לקצה השני בתוך המסגרת (44 - 20 - 3 = 21) */
 .switch input:checked + .slider::before {
-  transform: translateX(-18px);
+  inset-inline-start: 21px;
 }
 
 .switch input:disabled + .slider {
