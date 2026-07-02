@@ -7,13 +7,16 @@ import {
 } from 'react';
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   getRedirectResult,
   GoogleAuthProvider,
+  linkWithCredential,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithRedirect,
   signOut,
+  updatePassword,
   updateProfile,
   type User as FirebaseUser,
 } from 'firebase/auth';
@@ -38,6 +41,10 @@ interface AuthContextValue {
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  /** קביעת/עדכון סיסמה לחשבון הנוכחי (מאפשר התחברות אימייל+סיסמה גם למי שנכנס עם Google) */
+  setAccountPassword: (password: string) => Promise<void>;
+  /** האם לחשבון הנוכחי כבר יש שיטת אימייל+סיסמה */
+  hasPasswordProvider: () => boolean;
   /** רענון פרטי המשתמש מ-Firebase (למשל אחרי עדכון שם בהתחברות טלפון) */
   reloadUser: () => void;
 }
@@ -116,6 +123,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   }
 
+  function hasPasswordProvider() {
+    return (
+      auth.currentUser?.providerData.some(
+        (p) => p.providerId === 'password'
+      ) ?? false
+    );
+  }
+
+  async function setAccountPassword(password: string) {
+    const u = auth.currentUser;
+    if (!u || !u.email) {
+      throw new Error('לחשבון זה אין כתובת אימייל לקביעת סיסמה');
+    }
+    if (hasPasswordProvider()) {
+      await updatePassword(u, password);
+    } else {
+      const cred = EmailAuthProvider.credential(u.email, password);
+      await linkWithCredential(u, cred);
+    }
+    setUser(toAppUser(u));
+  }
+
   function reloadUser() {
     if (auth.currentUser) setUser(toAppUser(auth.currentUser));
   }
@@ -132,6 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithGoogle,
         logout,
         resetPassword,
+        setAccountPassword,
+        hasPasswordProvider,
         reloadUser,
       }}
     >

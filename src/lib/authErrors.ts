@@ -37,6 +37,10 @@ export function mapAuthError(err: unknown): string {
       return 'כבר קיים חשבון עם האימייל הזה. התחבר עם אימייל וסיסמה, או הפעל קישור-חשבונות בקונסולה';
     case 'auth/unauthorized-domain':
       return 'הדומיין אינו מורשה. יש להוסיפו ב-Authorized domains בקונסולת Firebase';
+    case 'auth/requires-recent-login':
+      return 'מטעמי אבטחה יש להתחבר מחדש ואז לנסות שוב';
+    case 'auth/credential-already-in-use':
+      return 'האימייל כבר משויך לחשבון אחר';
     default:
       if ((err as Error)?.message === 'timeout') {
         return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';

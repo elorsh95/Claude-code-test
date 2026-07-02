@@ -4,12 +4,14 @@ import { HouseholdProvider, useHousehold } from '../contexts/HouseholdContext';
 import { useAuth } from '../contexts/AuthContext';
 import { subscribePendingInvitations } from '../lib/invitations';
 import { Onboarding } from './Onboarding';
+import { AccountModal } from './AccountModal';
 import type { Invitation } from '../types';
 
 function LayoutInner() {
   const { user, logout } = useAuth();
   const { loading, error, activeHousehold, households } = useHousehold();
   const [pending, setPending] = useState<Invitation[]>([]);
+  const [showAccount, setShowAccount] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -61,10 +63,17 @@ function LayoutInner() {
             {households.length > 1 ? ' ▾' : ''}
           </div>
         </div>
-        <button className="btn-ghost btn btn-sm" onClick={() => logout()}>
-          התנתקות
+        <button
+          className="icon-btn"
+          onClick={() => setShowAccount(true)}
+          title="הגדרות חשבון"
+          aria-label="הגדרות חשבון"
+        >
+          ⚙️
         </button>
       </header>
+
+      {showAccount && <AccountModal onClose={() => setShowAccount(false)} />}
 
       <main className="content" key={location.pathname}>
         <Outlet />
