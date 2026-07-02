@@ -109,6 +109,36 @@ export interface Completion {
   at?: Timestamp;
 }
 
+/** פרס בחנות הפרסים - נפדה בנקודות שנצברו */
+export interface Reward {
+  id: string;
+  title: string;
+  /** עלות בנקודות */
+  cost: number;
+  /** אימוג'י לתצוגה (אופציונלי) */
+  emoji?: string;
+  /** האם הפרס פעיל וזמין לפדיון */
+  active: boolean;
+  createdBy: string;
+  createdAt?: Timestamp;
+}
+
+/** רשומת פדיון פרס - מנכה נקודות מהארנק של המשתמש */
+export interface Redemption {
+  id: string;
+  /** מי שקיבל את הפרס (ומנוכות לו הנקודות) */
+  userId: string;
+  userName: string;
+  rewardId: string;
+  rewardTitle: string;
+  /** עלות בנקודות שנוכתה */
+  cost: number;
+  /** מי שביצע את הפדיון בפועל */
+  byId: string;
+  byName: string;
+  at?: Timestamp;
+}
+
 export type HistoryEventType =
   | 'created'
   | 'assigned'

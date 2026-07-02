@@ -94,6 +94,27 @@ service cloud.firestore {
         allow delete: if isMember(hid);
       }
 
+      // ----- פרסים (קטלוג חנות הפרסים) -----
+      match /rewards/{rid} {
+        allow read: if isMember(hid);
+        // ניהול הקטלוג - למנהל בלבד
+        allow create, update, delete: if perm(hid, 'canManageMembers');
+      }
+
+      // ----- פדיונות (ניכוי נקודות מהארנק) -----
+      match /redemptions/{rdid} {
+        allow read: if isMember(hid);
+        // פדיון: לעצמו, או מנהל עבור אחר; המבצע חייב להיות המשתמש הנוכחי
+        allow create: if isMember(hid) &&
+          request.resource.data.byId == request.auth.uid && (
+            request.resource.data.userId == request.auth.uid ||
+            perm(hid, 'canManageMembers')
+          );
+        allow update: if false; // פדיון אינו ניתן לשינוי
+        // ביטול פדיון (החזרת נקודות) - למנהל בלבד
+        allow delete: if perm(hid, 'canManageMembers');
+      }
+
       // ----- משימות -----
       match /tasks/{tid} {
         allow read: if isMember(hid);

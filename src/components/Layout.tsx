@@ -101,6 +101,10 @@ function LayoutInner() {
           <span className="icon">🏆</span>
           ניקוד
         </NavLink>
+        <NavLink to="/rewards">
+          <span className="icon">🎁</span>
+          פרסים
+        </NavLink>
         <NavLink to="/members">
           <span className="icon">👨‍👩‍👧‍👦</span>
           המשפחה

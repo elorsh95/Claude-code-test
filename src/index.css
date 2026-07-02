@@ -134,13 +134,15 @@ a {
 }
 
 .tabbar a {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.2rem;
   border-radius: 10px;
 }
 
