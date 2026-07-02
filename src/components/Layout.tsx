@@ -7,10 +7,15 @@ import { Onboarding } from './Onboarding';
 import { AccountModal } from './AccountModal';
 import type { Invitation } from '../types';
 
-// זיהוי סביבה לפי הדומיין - התג יופיע רק כשלא רצים על אתר ה-prod
+// זיהוי סביבה לפי הדומיין - התג DEV יופיע רק כשלא רצים על אחד מדומייני ה-prod
+const PROD_HOSTS = [
+  'house-hold-tasks-587ef.web.app',
+  'house-hold-tasks.com',
+  'www.house-hold-tasks.com',
+];
 const isDevEnv =
   typeof window !== 'undefined' &&
-  window.location.hostname !== 'house-hold-tasks-587ef.web.app';
+  !PROD_HOSTS.includes(window.location.hostname);
 
 function LayoutInner() {
   const { user, logout } = useAuth();

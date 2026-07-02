@@ -3,10 +3,13 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // כל סביבה משתמשת ב-authDomain של עצמה (אותו דומיין) כדי שהתחברות Google
-// (redirect) תעבוד ללא בעיית אחסון בין-דומיינים. בדומיינים של Firebase Hosting
-// (web.app) נשתמש ב-host הנוכחי; אחרת בערך מ-env.
+// (redirect) תעבוד ללא בעיית אחסון בין-דומיינים. בדומיינים המתארחים ב-Firebase
+// Hosting (web.app או הדומיין המותאם) נשתמש ב-host הנוכחי; אחרת בערך מ-env.
+const CUSTOM_DOMAINS = ['house-hold-tasks.com', 'www.house-hold-tasks.com'];
 const host = typeof window !== 'undefined' ? window.location.hostname : '';
-const authDomain = host.endsWith('.web.app')
+const isHostingHost =
+  host.endsWith('.web.app') || CUSTOM_DOMAINS.includes(host);
+const authDomain = isHostingHost
   ? host
   : import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
 
