@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { mapAuthError } from '../pages/LoginPage';
 
 /** כפתור "התחברות עם Google" עם מפריד "או" */
-export function GoogleButton({ redirect }: { redirect: string }) {
+export function GoogleButton({ redirect: _redirect }: { redirect: string }) {
   const { loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -14,12 +12,11 @@ export function GoogleButton({ redirect }: { redirect: string }) {
     setBusy(true);
     setError('');
     try {
+      // מפנה ל-Google; הדף עוזב. החזרה מטופלת אוטומטית.
       await loginWithGoogle();
-      navigate(redirect, { replace: true });
     } catch (err) {
       console.error('Google sign-in error:', err);
       setError(mapAuthError(err));
-    } finally {
       setBusy(false);
     }
   }

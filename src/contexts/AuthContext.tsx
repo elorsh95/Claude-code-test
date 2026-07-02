@@ -7,11 +7,12 @@ import {
 } from 'react';
 import {
   createUserWithEmailAndPassword,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
   type User as FirebaseUser,
@@ -56,6 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // טיפול בחזרה מהתחברות Google (redirect) - יצירת מסמך משתמש אם חדש
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) return upsertUser(toAppUser(res.user));
+      })
+      .catch((e) => console.error('Google redirect error:', e));
+
     const unsub = onAuthStateChanged(auth, (fbUser) => {
       setUser(fbUser ? toAppUser(fbUser) : null);
       setLoading(false);
@@ -86,11 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function loginWithGoogle() {
+    // הפניה מלאה ל-Google; החזרה מטופלת ב-getRedirectResult בעת טעינת האפליקציה
     const provider = new GoogleAuthProvider();
-    const cred = await signInWithPopup(auth, provider);
-    const appUser = toAppUser(cred.user);
-    await upsertUser(appUser);
-    setUser(appUser);
+    await signInWithRedirect(auth, provider);
   }
 
   async function logout() {
