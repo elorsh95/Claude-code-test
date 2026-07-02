@@ -39,12 +39,21 @@ export function mapAuthError(err: unknown): string {
       return 'הדומיין אינו מורשה. יש להוסיפו ב-Authorized domains בקונסולת Firebase';
     case 'auth/requires-recent-login':
       return 'מטעמי אבטחה יש להתחבר מחדש ואז לנסות שוב';
+    case 'auth/billing-not-enabled':
+      return 'שליחת SMS דורשת הפעלת חיוב (תוכנית Blaze) בקונסולת Firebase — או שימוש במספר בדיקה';
+    case 'auth/captcha-check-failed':
+    case 'auth/invalid-app-credential':
+    case 'auth/missing-app-credential':
+      return 'אימות reCAPTCHA נכשל. רענן את הדף ונסה שוב';
+    case 'auth/app-not-authorized':
+      return 'הדומיין אינו מורשה לאימות טלפון';
     case 'auth/credential-already-in-use':
       return 'האימייל כבר משויך לחשבון אחר';
     default:
       if ((err as Error)?.message === 'timeout') {
         return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';
       }
-      return 'אירעה שגיאה. נסה שוב';
+      // מצרפים את קוד השגיאה כדי להקל על אבחון תקלות
+      return code ? `אירעה שגיאה: ${code}` : 'אירעה שגיאה. נסה שוב';
   }
 }
