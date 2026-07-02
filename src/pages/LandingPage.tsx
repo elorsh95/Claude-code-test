@@ -62,7 +62,7 @@ export function LandingPage() {
           <li>מזמינים את בני המשפחה ומגדירים הרשאות</li>
           <li>יוצרים משימות, מבצעים, וצוברים נקודות</li>
         </ol>
-        <div className="landing-cta" style={{ marginTop: '1.2rem' }}>
+        <div className="landing-cta" style={{ marginTop: '0.9rem' }}>
           <Link className="btn btn-block" to="/register">
             להתחלה — הרשמה חינם
           </Link>
