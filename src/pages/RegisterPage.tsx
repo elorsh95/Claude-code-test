@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
 import { GoogleButton } from '../components/GoogleButton';
+import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
 import { mapAuthError } from '../lib/authErrors';
 
 export function RegisterPage() {
@@ -10,6 +11,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
+  const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -44,6 +46,27 @@ export function RegisterPage() {
         <h2>הרשמה</h2>
         <p className="subtitle">פתח חשבון וצור את המרחב המשפחתי שלך</p>
 
+        <div className="filter-tabs" style={{ marginBottom: '1.2rem' }}>
+          <button
+            type="button"
+            className={method === 'email' ? 'active' : ''}
+            onClick={() => setMethod('email')}
+          >
+            אימייל
+          </button>
+          <button
+            type="button"
+            className={method === 'phone' ? 'active' : ''}
+            onClick={() => setMethod('phone')}
+          >
+            טלפון
+          </button>
+        </div>
+
+        {method === 'phone' ? (
+          <PhoneAuthPanel redirect={redirect} />
+        ) : (
+          <>
         {error && <div className="error-banner">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -96,6 +119,8 @@ export function RegisterPage() {
             {busy ? 'נרשם…' : 'הרשמה'}
           </button>
         </form>
+          </>
+        )}
 
         <GoogleButton redirect={redirect} />
 

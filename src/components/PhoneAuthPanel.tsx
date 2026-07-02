@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RecaptchaVerifier,
@@ -24,9 +24,17 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [resendIn, setResendIn] = useState(0);
 
   const verifierRef = useRef<RecaptchaVerifier | null>(null);
   const confirmRef = useRef<ConfirmationResult | null>(null);
+
+  // ספירה לאחור לשליחה חוזרת של הקוד
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setTimeout(() => setResendIn(resendIn - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendIn]);
 
   function getVerifier(): RecaptchaVerifier {
     if (!verifierRef.current) {
@@ -42,11 +50,11 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
     verifierRef.current = null;
   }
 
-  async function sendCode(e: React.FormEvent) {
-    e.preventDefault();
+  async function requestCode() {
     setBusy(true);
     setError('');
     try {
+      resetVerifier(); // reCAPTCHA חד-פעמי - יוצרים חדש בכל שליחה
       const e164 = toE164(phone);
       confirmRef.current = await signInWithPhoneNumber(
         auth,
@@ -54,12 +62,18 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
         getVerifier()
       );
       setStep('code');
+      setResendIn(60);
     } catch (err) {
       setError(mapAuthError(err));
       resetVerifier();
     } finally {
       setBusy(false);
     }
+  }
+
+  function sendCode(e: React.FormEvent) {
+    e.preventDefault();
+    requestCode();
   }
 
   async function verifyCode(e: React.FormEvent) {
@@ -159,20 +173,29 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
           <button className="btn btn-block" type="submit" disabled={busy}>
             {busy ? 'מאמת…' : 'אימות והתחברות'}
           </button>
-          <p className="auth-switch">
+          <div className="modal-actions" style={{ marginTop: '0.6rem' }}>
             <button
               type="button"
-              className="btn-ghost btn btn-sm"
+              className="btn btn-ghost btn-sm"
+              disabled={busy || resendIn > 0}
+              onClick={() => requestCode()}
+            >
+              {resendIn > 0 ? `שליחה חוזרת בעוד ${resendIn}s` : 'שליחה חוזרת'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
               disabled={busy}
               onClick={() => {
                 setStep('phone');
                 setCode('');
+                setResendIn(0);
                 resetVerifier();
               }}
             >
-              שינוי מספר / שליחה חוזרת
+              שינוי מספר
             </button>
-          </p>
+          </div>
         </form>
       )}
 
