@@ -118,7 +118,11 @@ service cloud.firestore {
     // מזהה ההזמנה הוא אקראי ובלתי-ניחוש (Firestore auto-id), ומשמש כ"סוד"
     // שבקישור. לכן כל משתמש מזוהה שמחזיק בקישור רשאי לקרוא ולאשר את ההזמנה.
     match /invitations/{invId} {
-      allow read: if isSignedIn();
+      // קריאת הזמנה בודדת לפי מזהה (המזהה הוא הסוד שבקישור) - מותרת גם
+      // לפני התחברות, כדי שהמוזמן יראה את פרטי ההזמנה ויוכל להירשם.
+      allow get: if true;
+      // שאילתות (list) דורשות התחברות (למשל טעינת ההזמנות של המשתמש).
+      allow list: if isSignedIn();
       allow create: if isSignedIn() &&
         perm(request.resource.data.householdId, 'canManageMembers');
       // עדכון סטטוס (accepted/declined) ע"י מי שמצטרף דרך הקישור, או ניהול ע"י מנהל
