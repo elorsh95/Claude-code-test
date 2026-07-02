@@ -10,10 +10,11 @@ import type { Task } from '../types';
 type Filter = 'all' | 'open' | 'done';
 
 export function DashboardPage() {
-  const { activeHousehold, currentMember } = useHousehold();
+  const { activeHousehold, currentMember, members } = useHousehold();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('open');
+  const [completerFilter, setCompleterFilter] = useState<string>('all');
 
   const [showCreate, setShowCreate] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -32,10 +33,15 @@ export function DashboardPage() {
   }, [activeHousehold]);
 
   const filtered = useMemo(() => {
-    if (filter === 'open') return tasks.filter((t) => t.status === 'open');
-    if (filter === 'done') return tasks.filter((t) => t.status === 'done');
-    return tasks;
-  }, [tasks, filter]);
+    let list = tasks;
+    if (filter === 'open') list = list.filter((t) => t.status === 'open');
+    if (filter === 'done') list = list.filter((t) => t.status === 'done');
+    // סינון לפי מי שביצע (סימן כבוצעה) את המשימה
+    if (completerFilter !== 'all') {
+      list = list.filter((t) => t.completedBy === completerFilter);
+    }
+    return list;
+  }, [tasks, filter, completerFilter]);
 
   const openCount = tasks.filter((t) => t.status === 'open').length;
 
@@ -67,6 +73,25 @@ export function DashboardPage() {
         >
           הכל
         </button>
+      </div>
+
+      <div className="field">
+        <select
+          value={completerFilter}
+          onChange={(e) => {
+            setCompleterFilter(e.target.value);
+            // משימות פתוחות לא בוצעו ע"י אף אחד - עוברים לתצוגת "בוצעו"
+            if (e.target.value !== 'all' && filter === 'open') setFilter('done');
+          }}
+          aria-label="סינון לפי מבצע"
+        >
+          <option value="all">🔎 מי ביצע: כולם</option>
+          {members.map((m) => (
+            <option key={m.userId} value={m.userId}>
+              בוצע ע"י {m.displayName}
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (

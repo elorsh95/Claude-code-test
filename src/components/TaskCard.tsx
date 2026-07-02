@@ -22,6 +22,10 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
     .map((id) => members.find((m) => m.userId === id))
     .filter(Boolean);
 
+  const completerName = isDone
+    ? members.find((m) => m.userId === task.completedBy)?.displayName
+    : undefined;
+
   async function toggle() {
     if (!user || !activeHousehold || !canComplete) return;
     await setTaskDone(activeHousehold.id, task.id, !isDone, {
@@ -54,6 +58,14 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
                 👤 {m!.displayName}
               </span>
             ))
+          )}
+          {completerName && (
+            <span
+              className="chip"
+              style={{ background: 'var(--success-light)', color: 'var(--success)' }}
+            >
+              ✅ בוצע ע"י {completerName}
+            </span>
           )}
         </div>
       </div>
