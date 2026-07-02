@@ -8,11 +8,15 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  Timestamp,
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { nextDueDate } from './format';
 import type {
+  Completion,
   HistoryEventType,
+  RecurrenceType,
   Task,
   TaskHistoryEvent,
 } from '../types';
@@ -28,6 +32,38 @@ function tasksCol(householdId: string) {
 
 function historyCol(householdId: string, taskId: string) {
   return collection(db, 'households', householdId, 'tasks', taskId, 'history');
+}
+
+function completionsCol(householdId: string) {
+  return collection(db, 'households', householdId, 'completions');
+}
+
+/** רישום ביצוע (לצבירת נקודות) */
+async function logCompletion(
+  householdId: string,
+  task: { id: string; title: string; points?: number },
+  actor: Actor
+): Promise<void> {
+  await addDoc(completionsCol(householdId), {
+    taskId: task.id,
+    taskTitle: task.title,
+    actorId: actor.uid,
+    actorName: actor.displayName,
+    points: task.points ?? 0,
+    at: serverTimestamp(),
+  });
+}
+
+/** מאזין לרשומות הביצוע של החשבון (לצבירת נקודות ולוח מובילים) */
+export function subscribeCompletions(
+  householdId: string,
+  callback: (items: Completion[]) => void
+): () => void {
+  return onSnapshot(completionsCol(householdId), (snap) => {
+    callback(
+      snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Completion, 'id'>) }))
+    );
+  });
 }
 
 /** רישום אירוע בהיסטוריית משימה */
@@ -65,6 +101,9 @@ interface CreateTaskInput {
   description: string;
   assigneeIds: string[];
   assigneeNames: string[];
+  dueDate: Date | null;
+  recurrence: RecurrenceType;
+  points: number;
 }
 
 /** יצירת משימה חדשה + רישום אירועי היסטוריה */
@@ -82,6 +121,9 @@ export async function createTask(
     createdAt: serverTimestamp(),
     completedBy: null,
     completedAt: null,
+    dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
+    recurrence: input.recurrence,
+    points: input.points,
   });
 
   await logHistory(householdId, ref.id, 'created', actor, 'המשימה נוצרה');
@@ -105,6 +147,9 @@ interface UpdateTaskInput {
   assigneeNames: string[];
   /** האם רשימת האחראים השתנתה */
   assigneesChanged: boolean;
+  dueDate: Date | null;
+  recurrence: RecurrenceType;
+  points: number;
 }
 
 /** עדכון פרטי משימה + רישום היסטוריה */
@@ -118,6 +163,9 @@ export async function updateTask(
     title: input.title.trim(),
     description: input.description.trim(),
     assigneeIds: input.assigneeIds,
+    dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
+    recurrence: input.recurrence,
+    points: input.points,
   });
   await logHistory(householdId, taskId, 'updated', actor, 'פרטי המשימה עודכנו');
   if (input.assigneesChanged) {
@@ -129,18 +177,43 @@ export async function updateTask(
   }
 }
 
-/** סימון משימה כבוצעה / החזרתה לפתוחה + רישום היסטוריה */
+/**
+ * סימון משימה כבוצעה / החזרתה לפתוחה + רישום היסטוריה.
+ * למשימה חוזרת: הביצוע מגלגל את תאריך היעד לתאריך הבא (נשארת פתוחה)
+ * ורושם ביצוע לצבירת נקודות - כך שאין צורך בהרשאת יצירת משימה.
+ */
 export async function setTaskDone(
   householdId: string,
   taskId: string,
   done: boolean,
-  actor: Actor
+  actor: Actor,
+  task: Task
 ): Promise<void> {
-  await updateDoc(doc(db, 'households', householdId, 'tasks', taskId), {
+  const ref = doc(db, 'households', householdId, 'tasks', taskId);
+  const isRecurring = (task.recurrence ?? 'none') !== 'none';
+
+  if (done && isRecurring) {
+    // גלגול תאריך היעד למחזור הבא; המשימה נשארת פתוחה
+    const base = task.dueDate ? task.dueDate.toDate() : new Date();
+    const next = nextDueDate(base, task.recurrence as RecurrenceType);
+    await updateDoc(ref, { dueDate: Timestamp.fromDate(next) });
+    await logCompletion(householdId, task, actor);
+    await logHistory(
+      householdId,
+      taskId,
+      'completed',
+      actor,
+      'בוצע מחזור; נקבע תאריך יעד חדש'
+    );
+    return;
+  }
+
+  await updateDoc(ref, {
     status: done ? 'done' : 'open',
     completedBy: done ? actor.uid : null,
     completedAt: done ? serverTimestamp() : null,
   });
+  if (done) await logCompletion(householdId, task, actor);
   await logHistory(
     householdId,
     taskId,

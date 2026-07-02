@@ -58,6 +58,9 @@ export interface Member {
 
 export type TaskStatus = 'open' | 'done';
 
+/** תדירות חזרה של משימה */
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly';
+
 /** משימה */
 export interface Task {
   id: string;
@@ -69,6 +72,23 @@ export interface Task {
   createdAt?: Timestamp;
   completedBy?: string | null;
   completedAt?: Timestamp | null;
+  /** תאריך יעד (אופציונלי) */
+  dueDate?: Timestamp | null;
+  /** תדירות חזרה */
+  recurrence?: RecurrenceType;
+  /** ניקוד שמוענק על ביצוע */
+  points?: number;
+}
+
+/** רשומת ביצוע - לצבירת נקודות (עובד גם למשימות חוזרות) */
+export interface Completion {
+  id: string;
+  taskId: string;
+  taskTitle: string;
+  actorId: string;
+  actorName: string;
+  points: number;
+  at?: Timestamp;
 }
 
 export type HistoryEventType =

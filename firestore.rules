@@ -77,6 +77,15 @@ service cloud.firestore {
           request.auth.uid == uid;
       }
 
+      // ----- רשומות ביצוע (לצבירת נקודות) -----
+      match /completions/{cid} {
+        allow read: if isMember(hid);
+        allow create: if isMember(hid) &&
+          request.resource.data.actorId == request.auth.uid;
+        allow update: if false; // רשומות ביצוע אינן ניתנות לשינוי
+        allow delete: if perm(hid, 'canManageMembers');
+      }
+
       // ----- משימות -----
       match /tasks/{tid} {
         allow read: if isMember(hid);
@@ -91,7 +100,7 @@ service cloud.firestore {
 
         function onlyCompletionFields() {
           return request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['status', 'completedBy', 'completedAt']);
+            .hasOnly(['status', 'completedBy', 'completedAt', 'dueDate']);
         }
 
         function canCompleteTask(hid2, tid2) {

@@ -45,6 +45,14 @@ export function DashboardPage() {
     if (filter === 'done' && completerFilter !== 'all') {
       list = list.filter((t) => t.completedBy === completerFilter);
     }
+    // בלשוניות עם פתוחות - מיון לפי תאריך יעד (הקרוב ביותר קודם, ואז ללא תאריך)
+    if (filter !== 'done') {
+      list = [...list].sort((a, b) => {
+        const da = a.dueDate ? a.dueDate.toMillis() : Infinity;
+        const db2 = b.dueDate ? b.dueDate.toMillis() : Infinity;
+        return da - db2;
+      });
+    }
     return list;
   }, [tasks, filter, completerFilter]);
 

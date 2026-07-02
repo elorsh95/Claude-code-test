@@ -4,13 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
 
 export function LoginPage() {
-  const { login, user } = useAuth();
+  const { login, user, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
 
   // אם כבר מחוברים - מעבר אוטומטי (בתוך effect, לא בזמן render)
@@ -22,9 +23,28 @@ export function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError('');
+    setInfo('');
     try {
       await withTimeout(login(email.trim(), password));
       navigate(redirect, { replace: true });
+    } catch (err) {
+      setError(mapAuthError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleForgot() {
+    setError('');
+    setInfo('');
+    if (!email.trim()) {
+      setError('הזן את האימייל שלך למעלה ואז לחץ "שכחתי סיסמה"');
+      return;
+    }
+    setBusy(true);
+    try {
+      await withTimeout(resetPassword(email.trim()));
+      setInfo('נשלח אליך מייל לאיפוס סיסמה. בדוק את תיבת הדואר (וגם ספאם).');
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -40,6 +60,7 @@ export function LoginPage() {
         <p className="subtitle">משימות המשפחה — ניהול משק הבית ביחד</p>
 
         {error && <div className="error-banner">{error}</div>}
+        {info && <div className="info-banner">{info}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="field">
@@ -68,6 +89,17 @@ export function LoginPage() {
             {busy ? 'מתחבר…' : 'התחברות'}
           </button>
         </form>
+
+        <p className="auth-switch">
+          <button
+            className="btn-ghost btn btn-sm"
+            type="button"
+            onClick={handleForgot}
+            disabled={busy}
+          >
+            שכחתי סיסמה
+          </button>
+        </p>
 
         <p className="auth-switch">
           אין לך חשבון?{' '}

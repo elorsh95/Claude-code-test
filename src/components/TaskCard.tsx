@@ -2,13 +2,21 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
 import { setTaskDone } from '../lib/tasks';
 import { canCompleteTask, hasPermission } from '../lib/permissions';
-import type { Task } from '../types';
+import { formatDate, isDueToday, isOverdue } from '../lib/format';
+import type { RecurrenceType, Task } from '../types';
 
 interface Props {
   task: Task;
   onInfo: (task: Task) => void;
   onEdit: (task: Task) => void;
 }
+
+const RECURRENCE_LABEL: Record<RecurrenceType, string> = {
+  none: '',
+  daily: 'יומי',
+  weekly: 'שבועי',
+  monthly: 'חודשי',
+};
 
 export function TaskCard({ task, onInfo, onEdit }: Props) {
   const { user } = useAuth();
@@ -26,12 +34,20 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
     ? members.find((m) => m.userId === task.completedBy)?.displayName
     : undefined;
 
+  const recurrence = (task.recurrence ?? 'none') as RecurrenceType;
+  const overdue = !isDone && isOverdue(task.dueDate);
+  const dueToday = !isDone && isDueToday(task.dueDate);
+  const points = task.points ?? 0;
+
   async function toggle() {
     if (!user || !activeHousehold || !canComplete) return;
-    await setTaskDone(activeHousehold.id, task.id, !isDone, {
-      uid: user.uid,
-      displayName: user.displayName,
-    });
+    await setTaskDone(
+      activeHousehold.id,
+      task.id,
+      !isDone,
+      { uid: user.uid, displayName: user.displayName },
+      task
+    );
   }
 
   return (
@@ -58,6 +74,25 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
                 👤 {m!.displayName}
               </span>
             ))
+          )}
+          {points > 0 && <span className="chip">⭐ {points}</span>}
+          {recurrence !== 'none' && (
+            <span className="chip muted">🔁 {RECURRENCE_LABEL[recurrence]}</span>
+          )}
+          {task.dueDate && (
+            <span
+              className="chip"
+              style={
+                overdue
+                  ? { background: '#fee2e2', color: 'var(--danger)' }
+                  : dueToday
+                    ? { background: '#ffedd5', color: 'var(--warning)' }
+                    : { background: 'var(--border)', color: 'var(--text-muted)' }
+              }
+            >
+              📅 {overdue ? 'עבר: ' : dueToday ? 'היום · ' : ''}
+              {formatDate(task.dueDate)}
+            </span>
           )}
           {completerName && (
             <span

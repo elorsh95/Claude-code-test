@@ -4,7 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
 import { createTask, deleteTask, updateTask } from '../lib/tasks';
 import { hasPermission } from '../lib/permissions';
-import type { Task } from '../types';
+import { dateInputToDate, dateToInputValue } from '../lib/format';
+import type { RecurrenceType, Task } from '../types';
 
 interface Props {
   task?: Task | null;
@@ -23,6 +24,11 @@ export function TaskFormModal({ task, onClose }: Props) {
   const [assigneeIds, setAssigneeIds] = useState<string[]>(
     task?.assigneeIds ?? []
   );
+  const [dueDate, setDueDate] = useState(dateToInputValue(task?.dueDate));
+  const [recurrence, setRecurrence] = useState<RecurrenceType>(
+    task?.recurrence ?? 'none'
+  );
+  const [points, setPoints] = useState(String(task?.points ?? 0));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -58,6 +64,8 @@ export function TaskFormModal({ task, onClose }: Props) {
     setBusy(true);
     setError('');
     const actor = { uid: user.uid, displayName: user.displayName };
+    const due = dateInputToDate(dueDate);
+    const pts = Math.max(0, parseInt(points, 10) || 0);
     try {
       if (isEdit && task) {
         const changed =
@@ -72,6 +80,9 @@ export function TaskFormModal({ task, onClose }: Props) {
             assigneeIds,
             assigneeNames: namesFor(assigneeIds),
             assigneesChanged: changed,
+            dueDate: due,
+            recurrence,
+            points: pts,
           },
           actor
         );
@@ -83,6 +94,9 @@ export function TaskFormModal({ task, onClose }: Props) {
             description,
             assigneeIds,
             assigneeNames: namesFor(assigneeIds),
+            dueDate: due,
+            recurrence,
+            points: pts,
           },
           actor
         );
@@ -117,6 +131,47 @@ export function TaskFormModal({ task, onClose }: Props) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="פרטים נוספים…"
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="due">תאריך יעד (אופציונלי)</label>
+          <input
+            id="due"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="recurrence">חזרתיות</label>
+          <select
+            id="recurrence"
+            value={recurrence}
+            onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
+          >
+            <option value="none">חד-פעמי</option>
+            <option value="daily">כל יום</option>
+            <option value="weekly">כל שבוע</option>
+            <option value="monthly">כל חודש</option>
+          </select>
+          {recurrence !== 'none' && (
+            <div className="member-sub" style={{ marginTop: '0.35rem' }}>
+              בכל ביצוע, תאריך היעד יתגלגל אוטומטית למחזור הבא.
+            </div>
+          )}
+        </div>
+
+        <div className="field">
+          <label htmlFor="points">נקודות על ביצוע</label>
+          <input
+            id="points"
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
           />
         </div>
 
