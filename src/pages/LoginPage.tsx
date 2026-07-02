@@ -117,6 +117,11 @@ export function LoginPage() {
             הרשמה
           </Link>
         </p>
+
+        <p className="auth-legal">
+          <Link to="/privacy">מדיניות פרטיות</Link> ·{' '}
+          <Link to="/terms">תנאי שימוש</Link>
+        </p>
       </div>
     </div>
   );
