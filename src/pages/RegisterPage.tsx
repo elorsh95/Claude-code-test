@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { withTimeout } from '../lib/format';
 import { mapAuthError } from './LoginPage';
 
 export function RegisterPage() {
@@ -24,7 +25,9 @@ export function RegisterPage() {
     setBusy(true);
     setError('');
     try {
-      await register(name.trim(), email.trim(), password, phone.trim());
+      await withTimeout(
+        register(name.trim(), email.trim(), password, phone.trim())
+      );
       navigate(redirect, { replace: true });
     } catch (err) {
       setError(mapAuthError(err));

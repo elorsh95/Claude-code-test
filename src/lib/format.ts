@@ -1,5 +1,30 @@
 import type { Timestamp } from 'firebase/firestore';
 
+/**
+ * עוטף הבטחה בטיימאאוט - כדי שפעולה תקועה (למשל רשת איטית) תציג
+ * שגיאה ברורה במקום ספינר אינסופי.
+ */
+export function withTimeout<T>(
+  promise: Promise<T>,
+  ms = 25000
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('timeout'));
+    }, ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
+
 /** המרת חותמת זמן של Firestore לתאריך קריא בעברית */
 export function formatDateTime(ts?: Timestamp | null): string {
   if (!ts) return '';

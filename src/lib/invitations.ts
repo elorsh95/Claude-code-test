@@ -56,6 +56,7 @@ export async function createInvitation(
     contactType: input.contactType,
     contactHash,
     contactMasked,
+    contactDisplay: input.contactDisplay,
     role: input.role,
     position: input.position,
     permissions: input.permissions,

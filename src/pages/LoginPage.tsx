@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { withTimeout } from '../lib/format';
 
 export function LoginPage() {
   const { login, user } = useAuth();
@@ -12,16 +13,17 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (user) {
-    navigate(redirect, { replace: true });
-  }
+  // אם כבר מחוברים - מעבר אוטומטי (בתוך effect, לא בזמן render)
+  useEffect(() => {
+    if (user) navigate(redirect, { replace: true });
+  }, [user, redirect, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      await login(email.trim(), password);
+      await withTimeout(login(email.trim(), password));
       navigate(redirect, { replace: true });
     } catch (err) {
       setError(mapAuthError(err));
@@ -93,7 +95,12 @@ export function mapAuthError(err: unknown): string {
       return 'כתובת אימייל לא תקינה';
     case 'auth/too-many-requests':
       return 'יותר מדי ניסיונות. נסה שוב מאוחר יותר';
+    case 'auth/network-request-failed':
+      return 'בעיית רשת. בדוק את החיבור לאינטרנט ונסה שוב';
     default:
+      if ((err as Error)?.message === 'timeout') {
+        return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';
+      }
       return 'אירעה שגיאה. נסה שוב';
   }
 }

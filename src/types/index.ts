@@ -100,10 +100,12 @@ export interface Invitation {
   householdName: string;
   /** סוג אמצעי הקשר שאליו ההזמנה נעולה */
   contactType: ContactType;
-  /** טביעת אצבע (SHA-256) של הערך המנורמל - הערך המלא אינו נשמר */
+  /** טביעת אצבע (SHA-256) של הערך המנורמל - משמשת לאימות ההתאמה */
   contactHash: string;
-  /** גרסה ממוסכת לתצוגת המנהל בלבד (למשל "···4567") */
+  /** גרסה ממוסכת (למשל "···4567") - להצגה בהקשרים לא-ניהוליים */
   contactMasked: string;
+  /** הערך המלא כפי שהוזן - לתצוגת המנהל בלבד; לעולם לא מוצג למוזמן */
+  contactDisplay: string;
   role: string;
   position: string;
   permissions: Permissions;
