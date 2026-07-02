@@ -8,8 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { MembersPage } from './pages/MembersPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { InvitationsPage } from './pages/InvitationsPage';
-import { Layout } from './components/Layout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { RootGate } from './components/RootGate';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -19,11 +18,7 @@ export const router = createBrowserRouter([
   { path: '/terms', element: <TermsPage /> },
   {
     path: '/',
-    element: (
-      <ProtectedRoute>
-        <Layout />
-      </ProtectedRoute>
-    ),
+    element: <RootGate />,
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
