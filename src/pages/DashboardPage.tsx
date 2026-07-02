@@ -32,12 +32,17 @@ export function DashboardPage() {
     return unsub;
   }, [activeHousehold]);
 
+  // איפוס סינון-המבצע כשעוזבים את לשונית "בוצעו"
+  useEffect(() => {
+    if (filter !== 'done') setCompleterFilter('all');
+  }, [filter]);
+
   const filtered = useMemo(() => {
     let list = tasks;
     if (filter === 'open') list = list.filter((t) => t.status === 'open');
     if (filter === 'done') list = list.filter((t) => t.status === 'done');
-    // סינון לפי מי שביצע (סימן כבוצעה) את המשימה
-    if (completerFilter !== 'all') {
+    // סינון לפי מי שביצע - רלוונטי רק בלשונית "בוצעו"
+    if (filter === 'done' && completerFilter !== 'all') {
       list = list.filter((t) => t.completedBy === completerFilter);
     }
     return list;
@@ -75,24 +80,22 @@ export function DashboardPage() {
         </button>
       </div>
 
-      <div className="field">
-        <select
-          value={completerFilter}
-          onChange={(e) => {
-            setCompleterFilter(e.target.value);
-            // משימות פתוחות לא בוצעו ע"י אף אחד - עוברים לתצוגת "בוצעו"
-            if (e.target.value !== 'all' && filter === 'open') setFilter('done');
-          }}
-          aria-label="סינון לפי מבצע"
-        >
-          <option value="all">🔎 מי ביצע: כולם</option>
-          {members.map((m) => (
-            <option key={m.userId} value={m.userId}>
-              בוצע ע"י {m.displayName}
-            </option>
-          ))}
-        </select>
-      </div>
+      {filter === 'done' && (
+        <div className="field">
+          <select
+            value={completerFilter}
+            onChange={(e) => setCompleterFilter(e.target.value)}
+            aria-label="סינון לפי מבצע"
+          >
+            <option value="all">🔎 מי ביצע: כולם</option>
+            {members.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                בוצע ע"י {m.displayName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {loading ? (
         <div className="spinner" style={{ margin: '3rem auto' }} />
