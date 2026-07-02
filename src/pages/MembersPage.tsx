@@ -7,6 +7,7 @@ import {
 import { hasPermission } from '../lib/permissions';
 import { initials } from '../lib/format';
 import { InviteModal } from '../components/InviteModal';
+import { InviteLinkModal } from '../components/InviteLinkModal';
 import { MemberEditModal } from '../components/MemberEditModal';
 import type { Invitation, Member } from '../types';
 
@@ -14,6 +15,7 @@ export function MembersPage() {
   const { activeHousehold, members, currentMember } = useHousehold();
   const [pending, setPending] = useState<Invitation[]>([]);
   const [showInvite, setShowInvite] = useState(false);
+  const [linkInvite, setLinkInvite] = useState<Invitation | null>(null);
   const [editMember, setEditMember] = useState<Member | null>(null);
 
   const canManage = hasPermission(currentMember, 'canManageMembers');
@@ -74,18 +76,34 @@ export function MembersPage() {
                   ממתין להצטרפות · תפקיד: {inv.role}
                 </div>
               </div>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => cancelInvitation(inv.id)}
-              >
-                ביטול
-              </button>
+              <div className="task-actions">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setLinkInvite(inv)}
+                >
+                  קישור
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => cancelInvitation(inv.id)}
+                >
+                  ביטול
+                </button>
+              </div>
             </div>
           ))}
         </>
       )}
 
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+      {linkInvite && (
+        <InviteLinkModal
+          inviteId={linkInvite.id}
+          householdName={linkInvite.householdName}
+          role={linkInvite.role}
+          onClose={() => setLinkInvite(null)}
+        />
+      )}
       {editMember && (
         <MemberEditModal
           member={editMember}
