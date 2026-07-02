@@ -51,7 +51,11 @@ service cloud.firestore {
       allow read: if isMember(hid);
       allow create: if isSignedIn() &&
         request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isOwner(hid);
+      // עדכון החשבון (כולל שיטת נקודות ואיפוס) - בעלים או מנהל או מי שרשאי לאפס נקודות
+      allow update: if isOwner(hid) ||
+        perm(hid, 'canManageMembers') ||
+        perm(hid, 'canResetPoints');
+      allow delete: if isOwner(hid);
 
       // ----- חברים -----
       match /members/{uid} {
@@ -83,7 +87,8 @@ service cloud.firestore {
         allow create: if isMember(hid) &&
           request.resource.data.actorId == request.auth.uid;
         allow update: if false; // רשומות ביצוע אינן ניתנות לשינוי
-        allow delete: if perm(hid, 'canManageMembers');
+        // מחיקה נדרשת בעת פתיחת משימה מחדש (הפחתת נקודות)
+        allow delete: if isMember(hid);
       }
 
       // ----- משימות -----

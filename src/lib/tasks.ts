@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   Timestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { nextDueDate } from './format';
@@ -38,20 +39,40 @@ function completionsCol(householdId: string) {
   return collection(db, 'households', householdId, 'completions');
 }
 
-/** רישום ביצוע (לצבירת נקודות) */
+/** מי שמקבל את הנקודות עבור הביצוע */
+export interface Beneficiary {
+  id: string;
+  name: string;
+}
+
+/** רישום ביצוע (לצבירת נקודות עבור המוטב) */
 async function logCompletion(
   householdId: string,
   task: { id: string; title: string; points?: number },
-  actor: Actor
+  actor: Actor,
+  beneficiary: Beneficiary
 ): Promise<void> {
   await addDoc(completionsCol(householdId), {
     taskId: task.id,
     taskTitle: task.title,
     actorId: actor.uid,
     actorName: actor.displayName,
+    beneficiaryId: beneficiary.id,
+    beneficiaryName: beneficiary.name,
     points: task.points ?? 0,
     at: serverTimestamp(),
   });
+}
+
+/** מחיקת רשומות הביצוע של משימה (להפחתת נקודות בעת פתיחה מחדש) */
+async function deleteCompletionsForTask(
+  householdId: string,
+  taskId: string
+): Promise<void> {
+  const snap = await getDocs(
+    query(completionsCol(householdId), where('taskId', '==', taskId))
+  );
+  await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
 }
 
 /** מאזין לרשומות הביצוע של החשבון (לצבירת נקודות ולוח מובילים) */
@@ -187,7 +208,8 @@ export async function setTaskDone(
   taskId: string,
   done: boolean,
   actor: Actor,
-  task: Task
+  task: Task,
+  beneficiary?: Beneficiary
 ): Promise<void> {
   const ref = doc(db, 'households', householdId, 'tasks', taskId);
   const isRecurring = (task.recurrence ?? 'none') !== 'none';
@@ -197,13 +219,13 @@ export async function setTaskDone(
     const base = task.dueDate ? task.dueDate.toDate() : new Date();
     const next = nextDueDate(base, task.recurrence as RecurrenceType);
     await updateDoc(ref, { dueDate: Timestamp.fromDate(next) });
-    await logCompletion(householdId, task, actor);
+    if (beneficiary) await logCompletion(householdId, task, actor, beneficiary);
     await logHistory(
       householdId,
       taskId,
       'completed',
       actor,
-      'בוצע מחזור; נקבע תאריך יעד חדש'
+      `בוצע מחזור${beneficiary ? ` (נקודות: ${beneficiary.name})` : ''}; תאריך יעד חדש`
     );
     return;
   }
@@ -213,13 +235,21 @@ export async function setTaskDone(
     completedBy: done ? actor.uid : null,
     completedAt: done ? serverTimestamp() : null,
   });
-  if (done) await logCompletion(householdId, task, actor);
+  if (done && beneficiary) {
+    await logCompletion(householdId, task, actor, beneficiary);
+  }
+  if (!done) {
+    // פתיחה מחדש - מפחיתים את הנקודות שהוענקו (מוחקים את רשומות הביצוע)
+    await deleteCompletionsForTask(householdId, taskId);
+  }
   await logHistory(
     householdId,
     taskId,
     done ? 'completed' : 'reopened',
     actor,
-    done ? 'המשימה סומנה כבוצעה' : 'המשימה נפתחה מחדש'
+    done
+      ? `המשימה סומנה כבוצעה${beneficiary ? ` (נקודות: ${beneficiary.name})` : ''}`
+      : 'המשימה נפתחה מחדש (הנקודות הופחתו)'
   );
 }
 

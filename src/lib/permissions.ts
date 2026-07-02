@@ -14,6 +14,10 @@ export const PERMISSION_LABELS: Record<PermissionKey, { label: string; hint: str
     label: 'ניהול בני המשפחה',
     hint: 'הזמנה, שינוי תפקידים והרשאות',
   },
+  canResetPoints: {
+    label: 'איפוס נקודות',
+    hint: 'איפוס הניקוד והגדרת שיטת הספירה',
+  },
 };
 
 export const PERMISSION_ORDER: PermissionKey[] = [
@@ -23,6 +27,7 @@ export const PERMISSION_ORDER: PermissionKey[] = [
   'canCompleteAnyTask',
   'canDeleteTasks',
   'canManageMembers',
+  'canResetPoints',
 ];
 
 /** הרשאות מלאות (בעל החשבון) */
@@ -33,6 +38,7 @@ export const FULL_PERMISSIONS: Permissions = {
   canAssignTasks: true,
   canCompleteAnyTask: true,
   canManageMembers: true,
+  canResetPoints: true,
 };
 
 /** ללא הרשאות כלל */
@@ -43,6 +49,7 @@ export const NO_PERMISSIONS: Permissions = {
   canAssignTasks: false,
   canCompleteAnyTask: false,
   canManageMembers: false,
+  canResetPoints: false,
 };
 
 export interface PermissionPreset {
@@ -74,6 +81,7 @@ export const PRESETS: PermissionPreset[] = [
       canAssignTasks: true,
       canCompleteAnyTask: true,
       canManageMembers: false,
+      canResetPoints: false,
     },
   },
   {
@@ -88,6 +96,7 @@ export const PRESETS: PermissionPreset[] = [
       canAssignTasks: false,
       canCompleteAnyTask: false,
       canManageMembers: false,
+      canResetPoints: false,
     },
   },
 ];

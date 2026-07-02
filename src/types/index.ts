@@ -10,7 +10,12 @@ export interface Permissions {
   canCompleteAnyTask: boolean;
   /** ניהול חברי המשפחה: הזמנה, עריכת תפקיד/הרשאות, הסרה */
   canManageMembers: boolean;
+  /** איפוס נקודות (והגדרת שיטת ספירה) */
+  canResetPoints: boolean;
 }
+
+/** שיטת ספירת הנקודות */
+export type PointsPeriod = 'daily' | 'weekly' | 'monthly' | 'all';
 
 export type PermissionKey = keyof Permissions;
 
@@ -29,6 +34,10 @@ export interface Household {
   name: string;
   ownerId: string;
   createdAt?: Timestamp;
+  /** שיטת ספירת הנקודות (ברירת מחדל: שבועי) */
+  pointsPeriod?: PointsPeriod;
+  /** מועד איפוס נקודות ידני אחרון (נקודות נספרות אחריו) */
+  pointsResetAt?: Timestamp | null;
 }
 
 /** רשומת חברות דנורמלית תחת המשתמש: users/{uid}/memberships/{householdId} */
@@ -85,8 +94,12 @@ export interface Completion {
   id: string;
   taskId: string;
   taskTitle: string;
+  /** מי שסימן את המשימה כבוצעה */
   actorId: string;
   actorName: string;
+  /** מי שמקבל את הנקודות (ברירת מחדל: האחראי/המבצע) */
+  beneficiaryId: string;
+  beneficiaryName: string;
   points: number;
   at?: Timestamp;
 }

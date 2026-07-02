@@ -3,12 +3,20 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { FULL_PERMISSIONS } from './permissions';
-import type { AppUser, Household, Member, Membership } from '../types';
+import type {
+  AppUser,
+  Household,
+  Member,
+  Membership,
+  PointsPeriod,
+} from '../types';
 
 /** כתיבת רשומת חברות דנורמלית תחת המשתמש (למקור אמת של "החשבונות שלי") */
 export async function writeMembership(
@@ -107,6 +115,35 @@ export async function getUserHouseholds(uid: string): Promise<Household[]> {
     }
   }
   return households;
+}
+
+/** עדכון שיטת ספירת הנקודות של החשבון */
+export async function setPointsPeriod(
+  householdId: string,
+  period: PointsPeriod
+): Promise<void> {
+  await updateDoc(doc(db, 'households', householdId), { pointsPeriod: period });
+}
+
+/** איפוס נקודות מעכשיו (שומר היסטוריה - רק מסמן מועד איפוס) */
+export async function resetPointsNow(householdId: string): Promise<void> {
+  await updateDoc(doc(db, 'households', householdId), {
+    pointsResetAt: serverTimestamp(),
+  });
+}
+
+/** מאזין בזמן אמת למסמך החשבון (לשיטת נקודות ומועד איפוס) */
+export function subscribeHousehold(
+  householdId: string,
+  callback: (household: Household | null) => void
+): () => void {
+  return onSnapshot(doc(db, 'households', householdId), (snap) => {
+    callback(
+      snap.exists()
+        ? { id: snap.id, ...(snap.data() as Omit<Household, 'id'>) }
+        : null
+    );
+  });
 }
 
 /** שליפת מסמך החבר של המשתמש בחשבון מסוים */

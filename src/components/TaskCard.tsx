@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
-import { setTaskDone } from '../lib/tasks';
+import { setTaskDone, type Beneficiary } from '../lib/tasks';
 import { canCompleteTask, hasPermission } from '../lib/permissions';
 import { formatDate, isDueToday, isOverdue } from '../lib/format';
+import { BeneficiaryModal } from './BeneficiaryModal';
 import type { RecurrenceType, Task } from '../types';
 
 interface Props {
@@ -39,15 +41,56 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
   const dueToday = !isDone && isDueToday(task.dueDate);
   const points = task.points ?? 0;
 
-  async function toggle() {
-    if (!user || !activeHousehold || !canComplete) return;
+  const [showChooser, setShowChooser] = useState(false);
+
+  async function complete(beneficiary: Beneficiary | undefined) {
+    if (!user || !activeHousehold) return;
     await setTaskDone(
       activeHousehold.id,
       task.id,
-      !isDone,
+      true,
       { uid: user.uid, displayName: user.displayName },
-      task
+      task,
+      beneficiary
     );
+  }
+
+  async function toggle() {
+    if (!user || !activeHousehold || !canComplete) return;
+
+    // פתיחה מחדש - ללא מוטב (הנקודות יופחתו)
+    if (isDone) {
+      await setTaskDone(
+        activeHousehold.id,
+        task.id,
+        false,
+        { uid: user.uid, displayName: user.displayName },
+        task
+      );
+      return;
+    }
+
+    // סימון כבוצעה - קביעת מי מקבל את הנקודות
+    const assignees = task.assigneeIds;
+    const selfIsAssignee = assignees.includes(user.uid);
+    if (selfIsAssignee) {
+      // המבצע הוא אחראי - הנקודות שלו
+      await complete({ id: user.uid, name: user.displayName });
+      return;
+    }
+    if (assignees.length === 1) {
+      // אחראי יחיד - הנקודות שלו (גם אם מישהו אחר סימן)
+      const m = members.find((x) => x.userId === assignees[0]);
+      await complete({ id: assignees[0], name: m?.displayName ?? '' });
+      return;
+    }
+    if (assignees.length === 0) {
+      // אין אחראי - הנקודות למי שסימן
+      await complete({ id: user.uid, name: user.displayName });
+      return;
+    }
+    // כמה אחראים והמסמן אינו אחד מהם - בחירה למי לזקוף
+    setShowChooser(true);
   }
 
   return (
@@ -125,6 +168,17 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
           </button>
         )}
       </div>
+
+      {showChooser && (
+        <BeneficiaryModal
+          task={task}
+          onClose={() => setShowChooser(false)}
+          onChoose={(b) => {
+            setShowChooser(false);
+            complete(b);
+          }}
+        />
+      )}
     </div>
   );
 }
