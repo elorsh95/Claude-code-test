@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 import { AuthProvider } from './contexts/AuthContext';
 import { initTheme } from './lib/theme';
+import './pwa';
 import './index.css';
 
 initTheme();

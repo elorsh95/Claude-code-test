@@ -14,3 +14,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// מזהה בנייה שמוזרק ע"י vite (define) - מוצג בהגדרות לאימות טעינת גרסה עדכנית
+declare const __BUILD_ID__: string;

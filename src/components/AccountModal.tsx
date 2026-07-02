@@ -182,6 +182,13 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
       >
         התנתקות
       </button>
+
+      <div
+        className="member-sub"
+        style={{ textAlign: 'center', marginTop: '1rem', opacity: 0.6 }}
+      >
+        גרסה {__BUILD_ID__}
+      </div>
     </Modal>
   );
 }
