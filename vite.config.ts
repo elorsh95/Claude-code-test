@@ -8,6 +8,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon.svg'],
+      workbox: {
+        // אל תתן ל-Service Worker לחטוף נתיבים שמורים של Firebase Auth
+        // (/__/auth/handler וכו') - חובה כדי שהתחברות Google (redirect) תעבוד
+        navigateFallbackDenylist: [/^\/__\//],
+      },
       manifest: {
         name: 'משימות המשפחה',
         short_name: 'משימות',
