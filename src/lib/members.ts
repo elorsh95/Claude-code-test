@@ -38,6 +38,17 @@ export async function updateMember(
   });
 }
 
+/** עדכון שם התצוגה של חבר */
+export async function updateMemberName(
+  householdId: string,
+  userId: string,
+  displayName: string
+): Promise<void> {
+  await updateDoc(doc(db, 'households', householdId, 'members', userId), {
+    displayName: displayName.trim(),
+  });
+}
+
 /** הסרת חבר מהחשבון (כולל רשומת החברות הפרטית שלו) */
 export async function removeMember(
   householdId: string,

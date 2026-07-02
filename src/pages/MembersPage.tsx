@@ -4,7 +4,7 @@ import {
   cancelInvitation,
   subscribeHouseholdInvitations,
 } from '../lib/invitations';
-import { hasPermission } from '../lib/permissions';
+import { canManageMember, hasPermission } from '../lib/permissions';
 import { initials } from '../lib/format';
 import { InviteModal } from '../components/InviteModal';
 import { InviteLinkModal } from '../components/InviteLinkModal';
@@ -39,30 +39,33 @@ export function MembersPage() {
         )}
       </div>
 
-      {members.map((m) => (
-        <div
-          className="card member-row"
-          key={m.userId}
-          onClick={() => canManage && setEditMember(m)}
-          style={{ cursor: canManage ? 'pointer' : 'default' }}
-        >
-          <div className="avatar">{initials(m.displayName)}</div>
-          <div className="member-info">
-            <div className="member-name">
-              {m.displayName}
-              {m.isOwner && (
-                <span className="chip" style={{ marginInlineStart: '0.4rem' }}>
-                  מנהל המשפחה
-                </span>
-              )}
+      {members.map((m) => {
+        const editable = canManageMember(currentMember, m);
+        return (
+          <div
+            className="card member-row"
+            key={m.userId}
+            onClick={() => editable && setEditMember(m)}
+            style={{ cursor: editable ? 'pointer' : 'default' }}
+          >
+            <div className="avatar">{initials(m.displayName)}</div>
+            <div className="member-info">
+              <div className="member-name">
+                {m.displayName}
+                {m.isOwner && (
+                  <span className="chip" style={{ marginInlineStart: '0.4rem' }}>
+                    מנהל המשפחה
+                  </span>
+                )}
+              </div>
+              <div className="member-sub">
+                {[m.role, m.position].filter(Boolean).join(' · ') || m.email}
+              </div>
             </div>
-            <div className="member-sub">
-              {[m.role, m.position].filter(Boolean).join(' · ') || m.email}
-            </div>
+            {editable && <span className="icon-btn">›</span>}
           </div>
-          {canManage && <span className="icon-btn">›</span>}
-        </div>
-      ))}
+        );
+      })}
 
       {canManage && pending.length > 0 && (
         <>

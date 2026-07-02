@@ -1,15 +1,47 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
+import { updateMemberName } from '../lib/members';
 import { mapAuthError } from '../lib/authErrors';
 
 export function AccountModal({ onClose }: { onClose: () => void }) {
-  const { user, setAccountPassword, hasPasswordProvider, logout } = useAuth();
+  const {
+    user,
+    setAccountPassword,
+    hasPasswordProvider,
+    updateDisplayName,
+    logout,
+  } = useAuth();
+  const { activeHousehold, currentMember } = useHousehold();
   const hasPassword = hasPasswordProvider();
+  const [name, setName] = useState(user?.displayName ?? '');
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameDone, setNameDone] = useState(false);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+
+  async function handleSaveName(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !user) return;
+    setNameBusy(true);
+    setError('');
+    setNameDone(false);
+    try {
+      await updateDisplayName(name.trim());
+      // עדכון שם התצוגה גם ברשומת החבר בחשבון הפעיל
+      if (activeHousehold && currentMember) {
+        await updateMemberName(activeHousehold.id, user.uid, name.trim());
+      }
+      setNameDone(true);
+    } catch (err) {
+      setError(mapAuthError(err));
+    } finally {
+      setNameBusy(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,10 +66,30 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
     <Modal title="הגדרות חשבון" onClose={onClose}>
       <div className="field">
         <label>מחובר כ</label>
-        <div className="member-name">{user?.displayName}</div>
         {user?.email && <div className="member-sub">{user.email}</div>}
         {user?.phone && <div className="member-sub">{user.phone}</div>}
       </div>
+
+      {nameDone && <div className="info-banner">השם עודכן!</div>}
+      <form onSubmit={handleSaveName}>
+        <div className="field">
+          <label htmlFor="disp-name">השם שלי</label>
+          <input
+            id="disp-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <button
+          className="btn btn-block"
+          type="submit"
+          disabled={nameBusy || !name.trim() || name.trim() === user?.displayName}
+        >
+          {nameBusy ? 'שומר…' : 'עדכון השם'}
+        </button>
+      </form>
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1rem 0' }} />
 

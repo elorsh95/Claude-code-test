@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal } from './Modal';
 import { PermissionsEditor } from './PermissionsEditor';
 import { useHousehold } from '../contexts/HouseholdContext';
-import { removeMember, updateMember } from '../lib/members';
+import { removeMember, updateMember, updateMemberName } from '../lib/members';
 import type { Member, Permissions } from '../types';
 
 export function MemberEditModal({
@@ -13,6 +13,7 @@ export function MemberEditModal({
   onClose: () => void;
 }) {
   const { activeHousehold } = useHousehold();
+  const [name, setName] = useState(member.displayName);
   const [role, setRole] = useState(member.role);
   const [position, setPosition] = useState(member.position);
   const [permissions, setPermissions] = useState<Permissions>({
@@ -29,6 +30,9 @@ export function MemberEditModal({
     setBusy(true);
     setError('');
     try {
+      if (name.trim() && name.trim() !== member.displayName) {
+        await updateMemberName(activeHousehold.id, member.userId, name.trim());
+      }
       await updateMember(activeHousehold.id, member.userId, {
         role,
         position,
@@ -63,6 +67,18 @@ export function MemberEditModal({
         </div>
       )}
       <form onSubmit={handleSave}>
+        {!isOwner && (
+          <div className="field">
+            <label htmlFor="member-name">שם</label>
+            <input
+              id="member-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+        )}
         <PermissionsEditor
           role={role}
           position={position}

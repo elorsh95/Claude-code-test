@@ -1,4 +1,4 @@
-import type { Permissions, PermissionKey } from '../types';
+import type { Member, Permissions, PermissionKey } from '../types';
 
 /** תוויות בעברית לכל הרשאה + תיאור קצר */
 export const PERMISSION_LABELS: Record<PermissionKey, { label: string; hint: string }> = {
@@ -112,6 +112,26 @@ export function hasPermission(
   if (!member) return false;
   if (member.isOwner) return true;
   return !!member.permissions[key];
+}
+
+/**
+ * האם ה-editor רשאי לנהל/לערוך חבר אחר (שם, תפקיד, הרשאות, הסרה).
+ * בעל החשבון - את כולם; מנהל - רק את מי שמתחתיו (לא בעל חשבון ולא מנהל אחר).
+ * לא כולל עריכה עצמית (זו מתבצעת דרך הגדרות החשבון).
+ */
+export function canManageMember(
+  editor: Member | null | undefined,
+  target: Member | null | undefined
+): boolean {
+  if (!editor || !target) return false;
+  if (editor.userId === target.userId) return false;
+  if (editor.isOwner) return true;
+  if (editor.permissions.canManageMembers) {
+    if (target.isOwner) return false;
+    if (target.permissions.canManageMembers) return false;
+    return true;
+  }
+  return false;
 }
 
 /** בדיקה האם המשתמש רשאי לסמן משימה מסוימת כבוצעה */

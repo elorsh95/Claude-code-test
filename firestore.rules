@@ -73,9 +73,12 @@ service cloud.firestore {
           ))
         );
 
-        // עריכה/הסרה של חבר: רק מנהל, ואי אפשר לגעת בבעל החשבון
-        allow update: if perm(hid, 'canManageMembers') &&
-          resource.data.isOwner == false;
+        // עריכה: מנהל (על חבר שאינו בעל החשבון), או המשתמש עצמו - שם התצוגה בלבד
+        allow update: if
+          (perm(hid, 'canManageMembers') && resource.data.isOwner == false) ||
+          (request.auth.uid == uid &&
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['displayName']));
         allow delete: if (perm(hid, 'canManageMembers') &&
           resource.data.isOwner == false) ||
           request.auth.uid == uid;
