@@ -17,6 +17,7 @@ export function GoogleButton({ redirect }: { redirect: string }) {
       await loginWithGoogle();
       navigate(redirect, { replace: true });
     } catch (err) {
+      console.error('Google sign-in error:', err);
       setError(mapAuthError(err));
     } finally {
       setBusy(false);

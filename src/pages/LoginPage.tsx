@@ -191,6 +191,8 @@ export function mapAuthError(err: unknown): string {
       return 'חלון ההתחברות נחסם. אפשר חלונות קופצים ונסה שוב';
     case 'auth/account-exists-with-different-credential':
       return 'קיים חשבון עם אימייל זה בשיטת התחברות אחרת';
+    case 'auth/unauthorized-domain':
+      return 'הדומיין אינו מורשה. יש להוסיף אותו ב-Authorized domains בקונסולת Firebase';
     default:
       if ((err as Error)?.message === 'timeout') {
         return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';
