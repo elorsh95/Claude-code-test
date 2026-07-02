@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
+import { GoogleButton } from '../components/GoogleButton';
 import { mapAuthError } from './LoginPage';
 
 export function RegisterPage() {
@@ -95,6 +96,8 @@ export function RegisterPage() {
             {busy ? 'נרשם…' : 'הרשמה'}
           </button>
         </form>
+
+        <GoogleButton redirect={redirect} />
 
         <p className="auth-switch">
           כבר יש לך חשבון?{' '}

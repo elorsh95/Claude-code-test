@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
 import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
+import { GoogleButton } from '../components/GoogleButton';
 
 export function LoginPage() {
   const { login, user, resetPassword } = useAuth();
@@ -136,6 +137,8 @@ export function LoginPage() {
           </>
         )}
 
+        <GoogleButton redirect={redirect} />
+
         <p className="auth-switch">
           אין לך חשבון?{' '}
           <Link to={`/register?redirect=${encodeURIComponent(redirect)}`}>
@@ -181,6 +184,13 @@ export function mapAuthError(err: unknown): string {
       return 'חרגת ממכסת ההודעות. נסה מאוחר יותר';
     case 'auth/operation-not-allowed':
       return 'התחברות זו אינה מופעלת. יש להפעילה בקונסולת Firebase';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'ההתחברות בוטלה';
+    case 'auth/popup-blocked':
+      return 'חלון ההתחברות נחסם. אפשר חלונות קופצים ונסה שוב';
+    case 'auth/account-exists-with-different-credential':
+      return 'קיים חשבון עם אימייל זה בשיטת התחברות אחרת';
     default:
       if ((err as Error)?.message === 'timeout') {
         return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';

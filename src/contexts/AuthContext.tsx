@@ -7,9 +7,11 @@ import {
 } from 'react';
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
   type User as FirebaseUser,
@@ -28,6 +30,7 @@ interface AuthContextValue {
     phone?: string
   ) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   /** רענון פרטי המשתמש מ-Firebase (למשל אחרי עדכון שם בהתחברות טלפון) */
@@ -82,6 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(toAppUser(cred.user));
   }
 
+  async function loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const appUser = toAppUser(cred.user);
+    await upsertUser(appUser);
+    setUser(appUser);
+  }
+
   async function logout() {
     await signOut(auth);
     setUser(null);
@@ -102,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         register,
         login,
+        loginWithGoogle,
         logout,
         resetPassword,
         reloadUser,

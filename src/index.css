@@ -747,3 +747,34 @@ a {
   color: var(--text-muted);
   text-decoration: underline;
 }
+
+.btn-google {
+  background: #fff;
+  color: #1f2937;
+  border: 1px solid var(--border);
+}
+
+.btn-google:hover {
+  background: #f8fafc;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 1rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider span {
+  padding: 0 0.75rem;
+}
