@@ -72,10 +72,9 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
 
     // סימון כבוצעה - קביעת מי מקבל את הנקודות
     const assignees = task.assigneeIds;
-    const selfIsAssignee = assignees.includes(user.uid);
-    if (selfIsAssignee) {
-      // המבצע הוא אחראי - הנקודות שלו
-      await complete({ id: user.uid, name: user.displayName });
+    if (assignees.length > 1) {
+      // כמה אחראים - תמיד מאפשרים לבחור למי לזקוף (גם אם המסמן אחד מהם)
+      setShowChooser(true);
       return;
     }
     if (assignees.length === 1) {
@@ -84,13 +83,8 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
       await complete({ id: assignees[0], name: m?.displayName ?? '' });
       return;
     }
-    if (assignees.length === 0) {
-      // אין אחראי - הנקודות למי שסימן
-      await complete({ id: user.uid, name: user.displayName });
-      return;
-    }
-    // כמה אחראים והמסמן אינו אחד מהם - בחירה למי לזקוף
-    setShowChooser(true);
+    // אין אחראי - הנקודות למי שסימן
+    await complete({ id: user.uid, name: user.displayName });
   }
 
   return (
