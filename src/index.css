@@ -720,6 +720,22 @@ a {
   box-shadow: var(--shadow-lg);
 }
 
+.icon-btn.filter-active {
+  color: var(--primary);
+  position: relative;
+}
+
+.icon-btn.filter-active::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
 /* ===== Calendar ===== */
 .cal-nav {
   display: flex;

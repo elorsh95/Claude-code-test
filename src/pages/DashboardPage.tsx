@@ -23,6 +23,7 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const [view, setView] = useState<'list' | 'calendar'>('list');
+  const [showFilters, setShowFilters] = useState(false);
   const [filter, setFilter] = useState<Filter>('open');
   const [completerFilter, setCompleterFilter] = useState<string>('all');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('all');
@@ -97,12 +98,35 @@ export function DashboardPage() {
   }, [baseFiltered, filter, completerFilter, sortBy]);
 
   const openCount = tasks.filter((t) => t.status === 'open').length;
+  const filtersActive =
+    search.trim() !== '' || assigneeFilter !== 'all' || sortBy !== 'due';
 
   return (
     <div>
       <div className="section-header">
         <h2>המשימות שלנו</h2>
-        {openCount > 0 && <span className="chip muted">{openCount} פתוחות</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          {openCount > 0 && (
+            <span className="chip muted">{openCount} פתוחות</span>
+          )}
+          <button
+            className={`icon-btn${filtersActive ? ' filter-active' : ''}`}
+            onClick={() => setShowFilters((v) => !v)}
+            title="חיפוש וסינון"
+            aria-label="חיפוש וסינון"
+          >
+            <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+              <path
+                d="M3 5h18l-7 8.2V20l-4-2v-4.8z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* מעבר בין רשימה ללוח שנה */}
@@ -121,31 +145,59 @@ export function DashboardPage() {
         </button>
       </div>
 
-      {/* חיפוש */}
-      <div className="field" style={{ marginBottom: '0.6rem' }}>
-        <input
-          type="search"
-          placeholder="🔍 חיפוש משימה…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* סינון לפי אחראי */}
-      {members.length > 0 && (
-        <div className="field" style={{ marginBottom: '0.6rem' }}>
-          <select
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            aria-label="סינון לפי אחראי"
-          >
-            <option value="all">👤 אחראי: כולם</option>
-            {members.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                אחראי: {m.displayName}
-              </option>
-            ))}
-          </select>
+      {/* פאנל חיפוש וסינון - מוצג בלחיצה על אייקון המסנן */}
+      {showFilters && (
+        <div className="card">
+          <div className="field" style={{ marginBottom: '0.6rem' }}>
+            <input
+              type="search"
+              placeholder="🔍 חיפוש משימה…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {members.length > 0 && (
+            <div className="field" style={{ marginBottom: view === 'list' ? '0.6rem' : 0 }}>
+              <select
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                aria-label="סינון לפי אחראי"
+              >
+                <option value="all">👤 אחראי: כולם</option>
+                {members.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    אחראי: {m.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {view === 'list' && (
+            <div className="field" style={{ marginBottom: 0 }}>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                aria-label="מיון"
+              >
+                <option value="due">מיון: תאריך יעד</option>
+                <option value="priority">מיון: עדיפות</option>
+                <option value="created">מיון: נוצר לאחרונה</option>
+              </select>
+            </div>
+          )}
+          {filtersActive && (
+            <button
+              className="btn btn-ghost btn-sm btn-block"
+              style={{ marginTop: '0.6rem' }}
+              onClick={() => {
+                setSearch('');
+                setAssigneeFilter('all');
+                setSortBy('due');
+              }}
+            >
+              ניקוי מסננים
+            </button>
+          )}
         </div>
       )}
 
@@ -157,19 +209,6 @@ export function DashboardPage() {
         />
       ) : (
         <>
-          {/* מיון */}
-          <div className="field" style={{ marginBottom: '0.6rem' }}>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              aria-label="מיון"
-            >
-              <option value="due">מיון: תאריך יעד</option>
-              <option value="priority">מיון: עדיפות</option>
-              <option value="created">מיון: נוצר לאחרונה</option>
-            </select>
-          </div>
-
           {/* סטטוס */}
           <div className="filter-tabs">
             <button
