@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { mapAuthError } from '../pages/LoginPage';
+import { mapAuthError } from '../lib/authErrors';
 
 /** כפתור "התחברות עם Google" עם מפריד "או" */
 export function GoogleButton({ redirect: _redirect }: { redirect: string }) {

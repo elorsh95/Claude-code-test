@@ -19,11 +19,15 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import { upsertUser } from '../lib/households';
+import { mapAuthError } from '../lib/authErrors';
 import type { AppUser } from '../types';
 
 interface AuthContextValue {
   user: AppUser | null;
   loading: boolean;
+  /** שגיאה שהתרחשה בחזרה מהתחברות Google (redirect) */
+  authError: string | null;
+  clearAuthError: () => void;
   register: (
     name: string,
     email: string,
@@ -55,6 +59,7 @@ function toAppUser(fbUser: FirebaseUser): AppUser {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // טיפול בחזרה מהתחברות Google (redirect) - יצירת מסמך משתמש אם חדש
@@ -62,7 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((res) => {
         if (res?.user) return upsertUser(toAppUser(res.user));
       })
-      .catch((e) => console.error('Google redirect error:', e));
+      .catch((e) => {
+        console.error('Google redirect error:', e);
+        setAuthError(mapAuthError(e));
+      });
 
     const unsub = onAuthStateChanged(auth, (fbUser) => {
       setUser(fbUser ? toAppUser(fbUser) : null);
@@ -117,6 +125,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         loading,
+        authError,
+        clearAuthError: () => setAuthError(null),
         register,
         login,
         loginWithGoogle,

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
+import { mapAuthError } from '../lib/authErrors';
 import { PhoneAuthPanel } from '../components/PhoneAuthPanel';
 import { GoogleButton } from '../components/GoogleButton';
 
 export function LoginPage() {
-  const { login, user, resetPassword } = useAuth();
+  const { login, user, resetPassword, authError, clearAuthError } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
@@ -71,6 +72,12 @@ export function LoginPage() {
         <img src="/icons/icon.svg" alt="" className="auth-logo" />
         <h2>התחברות</h2>
         <p className="subtitle">משימות המשפחה — ניהול משק הבית ביחד</p>
+
+        {authError && (
+          <div className="error-banner" onClick={clearAuthError}>
+            {authError}
+          </div>
+        )}
 
         <div className="filter-tabs" style={{ marginBottom: '1.2rem' }}>
           <button
@@ -153,50 +160,4 @@ export function LoginPage() {
       </div>
     </div>
   );
-}
-
-export function mapAuthError(err: unknown): string {
-  const code = (err as { code?: string })?.code ?? '';
-  switch (code) {
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
-      return 'אימייל או סיסמה שגויים';
-    case 'auth/email-already-in-use':
-      return 'האימייל כבר רשום במערכת';
-    case 'auth/weak-password':
-      return 'הסיסמה חייבת להכיל לפחות 6 תווים';
-    case 'auth/invalid-email':
-      return 'כתובת אימייל לא תקינה';
-    case 'auth/too-many-requests':
-      return 'יותר מדי ניסיונות. נסה שוב מאוחר יותר';
-    case 'auth/network-request-failed':
-      return 'בעיית רשת. בדוק את החיבור לאינטרנט ונסה שוב';
-    case 'auth/invalid-phone-number':
-      return 'מספר טלפון לא תקין';
-    case 'auth/missing-phone-number':
-      return 'יש להזין מספר טלפון';
-    case 'auth/invalid-verification-code':
-      return 'הקוד שהוזן שגוי';
-    case 'auth/code-expired':
-      return 'הקוד פג תוקף. שלח קוד חדש';
-    case 'auth/quota-exceeded':
-      return 'חרגת ממכסת ההודעות. נסה מאוחר יותר';
-    case 'auth/operation-not-allowed':
-      return 'התחברות זו אינה מופעלת. יש להפעילה בקונסולת Firebase';
-    case 'auth/popup-closed-by-user':
-    case 'auth/cancelled-popup-request':
-      return 'ההתחברות בוטלה';
-    case 'auth/popup-blocked':
-      return 'חלון ההתחברות נחסם. אפשר חלונות קופצים ונסה שוב';
-    case 'auth/account-exists-with-different-credential':
-      return 'קיים חשבון עם אימייל זה בשיטת התחברות אחרת';
-    case 'auth/unauthorized-domain':
-      return 'הדומיין אינו מורשה. יש להוסיף אותו ב-Authorized domains בקונסולת Firebase';
-    default:
-      if ((err as Error)?.message === 'timeout') {
-        return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';
-      }
-      return 'אירעה שגיאה. נסה שוב';
-  }
 }

@@ -1,0 +1,46 @@
+/** מיפוי שגיאות Firebase Auth להודעות בעברית */
+export function mapAuthError(err: unknown): string {
+  const code = (err as { code?: string })?.code ?? '';
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found':
+      return 'אימייל או סיסמה שגויים';
+    case 'auth/email-already-in-use':
+      return 'האימייל כבר רשום במערכת';
+    case 'auth/weak-password':
+      return 'הסיסמה חייבת להכיל לפחות 6 תווים';
+    case 'auth/invalid-email':
+      return 'כתובת אימייל לא תקינה';
+    case 'auth/too-many-requests':
+      return 'יותר מדי ניסיונות. נסה שוב מאוחר יותר';
+    case 'auth/network-request-failed':
+      return 'בעיית רשת. בדוק את החיבור לאינטרנט ונסה שוב';
+    case 'auth/invalid-phone-number':
+      return 'מספר טלפון לא תקין';
+    case 'auth/missing-phone-number':
+      return 'יש להזין מספר טלפון';
+    case 'auth/invalid-verification-code':
+      return 'הקוד שהוזן שגוי';
+    case 'auth/code-expired':
+      return 'הקוד פג תוקף. שלח קוד חדש';
+    case 'auth/quota-exceeded':
+      return 'חרגת ממכסת ההודעות. נסה מאוחר יותר';
+    case 'auth/operation-not-allowed':
+      return 'התחברות זו אינה מופעלת. יש להפעילה בקונסולת Firebase';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'ההתחברות בוטלה';
+    case 'auth/popup-blocked':
+      return 'חלון ההתחברות נחסם. אפשר חלונות קופצים ונסה שוב';
+    case 'auth/account-exists-with-different-credential':
+      return 'כבר קיים חשבון עם האימייל הזה. התחבר עם אימייל וסיסמה, או הפעל קישור-חשבונות בקונסולה';
+    case 'auth/unauthorized-domain':
+      return 'הדומיין אינו מורשה. יש להוסיפו ב-Authorized domains בקונסולת Firebase';
+    default:
+      if ((err as Error)?.message === 'timeout') {
+        return 'החיבור לוקח יותר מדי זמן. בדוק את הרשת ונסה שוב';
+      }
+      return 'אירעה שגיאה. נסה שוב';
+  }
+}

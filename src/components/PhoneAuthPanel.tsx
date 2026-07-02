@@ -11,7 +11,7 @@ import { auth, db } from '../firebase/config';
 import { useAuth } from '../contexts/AuthContext';
 import { upsertUser } from '../lib/households';
 import { toE164 } from '../lib/format';
-import { mapAuthError } from '../pages/LoginPage';
+import { mapAuthError } from '../lib/authErrors';
 
 type Step = 'phone' | 'code' | 'name';
 

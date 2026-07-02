@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { withTimeout } from '../lib/format';
 import { GoogleButton } from '../components/GoogleButton';
-import { mapAuthError } from './LoginPage';
+import { mapAuthError } from '../lib/authErrors';
 
 export function RegisterPage() {
   const { register } = useAuth();
