@@ -7,6 +7,11 @@ import { Onboarding } from './Onboarding';
 import { AccountModal } from './AccountModal';
 import type { Invitation } from '../types';
 
+// זיהוי סביבה לפי הדומיין - התג יופיע רק כשלא רצים על אתר ה-prod
+const isDevEnv =
+  typeof window !== 'undefined' &&
+  window.location.hostname !== 'house-hold-tasks-587ef.web.app';
+
 function LayoutInner() {
   const { user, logout } = useAuth();
   const { loading, error, activeHousehold, households } = useHousehold();
@@ -57,7 +62,10 @@ function LayoutInner() {
     <div className="app-shell">
       <header className="topbar">
         <div>
-          <h1>משימות המשפחה</h1>
+          <h1>
+            משימות המשפחה
+            {isDevEnv && <span className="env-badge">DEV</span>}
+          </h1>
           <div className="household-name">
             {activeHousehold.name}
             {households.length > 1 ? ' ▾' : ''}
