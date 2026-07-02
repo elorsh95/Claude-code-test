@@ -178,6 +178,12 @@ export function PhoneAuthPanel({ redirect }: { redirect: string }) {
                 ? 'שליחת קוד ב-SMS'
                 : 'סמן שאינך רובוט כדי להמשיך'}
           </button>
+          <p
+            className="member-sub"
+            style={{ textAlign: 'center', marginTop: '0.6rem' }}
+          >
+            אם ה-SMS לא מגיע, אפשר להתחבר עם אימייל או Google.
+          </p>
         </form>
       )}
 

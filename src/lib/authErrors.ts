@@ -26,6 +26,11 @@ export function mapAuthError(err: unknown): string {
       return 'הקוד פג תוקף. שלח קוד חדש';
     case 'auth/quota-exceeded':
       return 'חרגת ממכסת ההודעות. נסה מאוחר יותר';
+    // 503 משרתי ה-SMS של Firebase - תקלה זמנית בצד השירות, לא באפליקציה.
+    // קורה בעיקר בשליחה למספרים אמיתיים בחלק מהמדינות/מפעילים.
+    case 'auth/error-code:-39':
+    case 'auth/internal-error':
+      return 'שליחת ה-SMS אינה זמינה כרגע (תקלה זמנית בשירות). אפשר להתחבר עם אימייל או Google, או לנסות שוב מאוחר יותר';
     case 'auth/operation-not-allowed':
       return 'התחברות זו אינה מופעלת. יש להפעילה בקונסולת Firebase';
     case 'auth/popup-closed-by-user':
