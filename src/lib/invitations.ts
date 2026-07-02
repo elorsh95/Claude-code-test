@@ -13,6 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { writeMembership } from './households';
+import { sha256Hex } from './hash';
+import { maskContact } from './format';
 import type {
   AppUser,
   ContactType,
@@ -26,7 +28,7 @@ interface CreateInviteInput {
   householdName: string;
   contactType: ContactType;
   contactValue: string; // מנורמל (מייל lowercase / טלפון ספרות)
-  contactDisplay: string; // הערך המקורי שהוזן
+  contactDisplay: string; // הערך המקורי שהוזן (לחישוב המסכה בלבד)
   role: string;
   position: string;
   permissions: Permissions;
@@ -36,17 +38,24 @@ interface CreateInviteInput {
 
 /**
  * יצירת קישור הזמנה חדש, נעול לאיש ספציפי לפי מייל או טלפון.
+ * הערך המלא אינו נשמר - רק hash לבדיקה וגרסה ממוסכת לתצוגת המנהל.
  * מחזיר את מזהה ההזמנה, שממנו נבנה הקישור לשיתוף.
  */
 export async function createInvitation(
   input: CreateInviteInput
 ): Promise<string> {
+  const contactHash = await sha256Hex(input.contactValue);
+  const contactMasked = maskContact(
+    input.contactType,
+    input.contactDisplay,
+    input.contactValue
+  );
   const ref = await addDoc(collection(db, 'invitations'), {
     householdId: input.householdId,
     householdName: input.householdName,
     contactType: input.contactType,
-    contactValue: input.contactValue,
-    contactDisplay: input.contactDisplay,
+    contactHash,
+    contactMasked,
     role: input.role,
     position: input.position,
     permissions: input.permissions,
@@ -77,18 +86,29 @@ export function subscribePendingInvitations(
   email: string,
   callback: (invites: Invitation[]) => void
 ): () => void {
-  // הזמנות המייל של המשתמש: שאילתת שדה-יחיד (contactValue) + סינון בקוד
-  const q = query(
-    collection(db, 'invitations'),
-    where('contactValue', '==', email.toLowerCase())
-  );
-  return onSnapshot(q, (snap) => {
-    callback(
-      snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
-        .filter((inv) => inv.contactType === 'email' && inv.status === 'pending')
+  // הזמנות המייל של המשתמש: מגבבים את המייל ומחפשים לפי contactHash
+  let unsub = () => {};
+  let active = true;
+  sha256Hex(email.toLowerCase()).then((hash) => {
+    if (!active) return;
+    const q = query(
+      collection(db, 'invitations'),
+      where('contactHash', '==', hash)
     );
+    unsub = onSnapshot(q, (snap) => {
+      callback(
+        snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as Omit<Invitation, 'id'>) }))
+          .filter(
+            (inv) => inv.contactType === 'email' && inv.status === 'pending'
+          )
+      );
+    });
   });
+  return () => {
+    active = false;
+    unsub();
+  };
 }
 
 /** מאזין להזמנות הממתינות של חשבון מסוים (לתצוגת המנהל) */

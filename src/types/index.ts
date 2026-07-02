@@ -100,10 +100,10 @@ export interface Invitation {
   householdName: string;
   /** סוג אמצעי הקשר שאליו ההזמנה נעולה */
   contactType: ContactType;
-  /** הערך המנורמל (מייל באותיות קטנות / טלפון ספרות בלבד) */
-  contactValue: string;
-  /** התצוגה המקורית שהוזנה (לתצוגה למנהל) */
-  contactDisplay: string;
+  /** טביעת אצבע (SHA-256) של הערך המנורמל - הערך המלא אינו נשמר */
+  contactHash: string;
+  /** גרסה ממוסכת לתצוגת המנהל בלבד (למשל "···4567") */
+  contactMasked: string;
   role: string;
   position: string;
   permissions: Permissions;

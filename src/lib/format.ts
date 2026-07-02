@@ -24,6 +24,27 @@ export function normalizePhone(phone: string): string {
   return d;
 }
 
+/**
+ * מיסוך אמצעי קשר לתצוגת המנהל בלבד (הערך המלא אינו נשמר).
+ * מייל: "ab***@gmail.com" · טלפון: "···4567"
+ */
+export function maskContact(
+  type: 'email' | 'phone',
+  display: string,
+  normalized: string
+): string {
+  if (type === 'phone') {
+    const last4 = normalized.slice(-4);
+    return last4 ? `···${last4}` : '···';
+  }
+  const at = display.indexOf('@');
+  if (at <= 0) return '***';
+  const local = display.slice(0, at);
+  const domain = display.slice(at + 1);
+  const shown = local.length <= 1 ? local[0] : local.slice(0, 2);
+  return `${shown}***@${domain}`;
+}
+
 /** ראשי תיבות משם לתצוגת אווטאר */
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);

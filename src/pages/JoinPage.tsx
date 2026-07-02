@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { acceptInvitation, getInvitation } from '../lib/invitations';
 import { getUserPhone } from '../lib/households';
 import { normalizePhone } from '../lib/format';
+import { sha256Hex } from '../lib/hash';
 import type { Invitation } from '../types';
 
 export function JoinPage() {
@@ -36,14 +37,12 @@ export function JoinPage() {
     }
     let cancelled = false;
     (async () => {
-      if (invite.contactType === 'email') {
-        if (!cancelled)
-          setContactOk(user.email.toLowerCase() === invite.contactValue);
-      } else {
-        const phone = await getUserPhone(user.uid);
-        if (!cancelled)
-          setContactOk(normalizePhone(phone) === invite.contactValue);
-      }
+      const raw =
+        invite.contactType === 'email'
+          ? user.email.toLowerCase()
+          : normalizePhone(await getUserPhone(user.uid));
+      const hash = await sha256Hex(raw);
+      if (!cancelled) setContactOk(hash === invite.contactHash);
     })();
     return () => {
       cancelled = true;
@@ -101,11 +100,6 @@ export function JoinPage() {
               בתפקיד: {invite.role}
               {invite.position ? ` · ${invite.position}` : ''}
             </p>
-
-            <div className="info-banner">
-              הזמנה זו נעולה ל{contactLabel}:{' '}
-              <strong>{invite.contactDisplay}</strong>
-            </div>
 
             {error && <div className="error-banner">{error}</div>}
 
