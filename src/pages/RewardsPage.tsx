@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useHousehold } from '../contexts/HouseholdContext';
 import { subscribeCompletions } from '../lib/tasks';
 import {
-  computeBalances,
+  computeLedgers,
   createReward,
   deleteRedemption,
   deleteReward,
@@ -46,14 +46,18 @@ export function RewardsPage() {
     if (currentMember && !targetUserId) setTargetUserId(currentMember.userId);
   }, [currentMember, targetUserId]);
 
-  const balances = useMemo(
-    () => computeBalances(completions, redemptions),
+  const ledgers = useMemo(
+    () => computeLedgers(completions, redemptions),
     [completions, redemptions]
   );
+  const emptyLedger = { earned: 0, redeemed: 0, available: 0 };
 
   const targetMember =
     members.find((m) => m.userId === targetUserId) ?? currentMember;
-  const targetBalance = targetMember ? balances[targetMember.userId] ?? 0 : 0;
+  const targetLedger = targetMember
+    ? ledgers[targetMember.userId] ?? emptyLedger
+    : emptyLedger;
+  const targetBalance = targetLedger.available;
 
   const recentRedemptions = useMemo(
     () =>
@@ -123,6 +127,9 @@ export function RewardsPage() {
         <div style={{ fontSize: '2rem', fontWeight: 800, margin: '0.2rem 0' }}>
           ⭐ {targetBalance}
         </div>
+        <div className="member-sub">
+          נצברו {targetLedger.earned} · נפדו {targetLedger.redeemed}
+        </div>
         {canManage && members.length > 1 && (
           <div className="field" style={{ marginBottom: 0, marginTop: '0.5rem' }}>
             <label>פדיון עבור</label>
@@ -132,7 +139,7 @@ export function RewardsPage() {
             >
               {members.map((m) => (
                 <option key={m.userId} value={m.userId}>
-                  {m.displayName} (⭐ {balances[m.userId] ?? 0})
+                  {m.displayName} (⭐ {ledgers[m.userId]?.available ?? 0})
                 </option>
               ))}
             </select>

@@ -131,21 +131,42 @@ export async function deleteRedemption(
  * חישוב יתרת הארנק לכל משתמש: סך הנקודות שנצברו אי־פעם (לפי מוטב)
  * פחות סך הנקודות שנפדו. ארנק זה אינו מושפע מאיפוס לוח המובילים.
  */
+export interface Ledger {
+  /** סך הנקודות שנצברו אי־פעם (לפי מוטב) */
+  earned: number;
+  /** סך הנקודות שנפדו */
+  redeemed: number;
+  /** יתרה זמינה לפדיון (לעולם לא שלילית) */
+  available: number;
+}
+
+/** חישוב פירוט הנקודות (נצברו/נפדו/זמין) לכל משתמש */
+export function computeLedgers(
+  completions: Completion[],
+  redemptions: Redemption[]
+): Record<string, Ledger> {
+  const map: Record<string, Ledger> = {};
+  const ensure = (uid: string) =>
+    (map[uid] ??= { earned: 0, redeemed: 0, available: 0 });
+  for (const c of completions) {
+    ensure(c.beneficiaryId ?? c.actorId).earned += c.points ?? 0;
+  }
+  for (const r of redemptions) {
+    ensure(r.userId).redeemed += r.cost ?? 0;
+  }
+  for (const l of Object.values(map)) {
+    // הזמין לעולם אינו יורד מתחת לאפס (למשל אם משימה נפתחה מחדש אחרי פדיון)
+    l.available = Math.max(0, l.earned - l.redeemed);
+  }
+  return map;
+}
+
 export function computeBalances(
   completions: Completion[],
   redemptions: Redemption[]
 ): Record<string, number> {
+  const ledgers = computeLedgers(completions, redemptions);
   const bal: Record<string, number> = {};
-  for (const c of completions) {
-    const uid = c.beneficiaryId ?? c.actorId;
-    bal[uid] = (bal[uid] ?? 0) + (c.points ?? 0);
-  }
-  for (const r of redemptions) {
-    bal[r.userId] = (bal[r.userId] ?? 0) - (r.cost ?? 0);
-  }
-  // הארנק לעולם אינו יורד מתחת לאפס (למשל אם משימה נפתחה מחדש אחרי פדיון)
-  for (const uid of Object.keys(bal)) {
-    if (bal[uid] < 0) bal[uid] = 0;
-  }
+  for (const [uid, l] of Object.entries(ledgers)) bal[uid] = l.available;
   return bal;
 }
