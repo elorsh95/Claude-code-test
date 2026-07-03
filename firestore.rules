@@ -87,8 +87,15 @@ service cloud.firestore {
       // ----- רשומות ביצוע (לצבירת נקודות) -----
       match /completions/{cid} {
         allow read: if isMember(hid);
+        // המסמן חייב להיות המשתמש הנוכחי; זקיפת נקודות לאדם אחר מותרת
+        // רק למי שרשאי לסמן כל משימה (מנהל/בוגר/בעלים). ילד יכול לזקוף
+        // נקודות לעצמו בלבד.
         allow create: if isMember(hid) &&
-          request.resource.data.actorId == request.auth.uid;
+          request.resource.data.actorId == request.auth.uid && (
+            request.resource.data.beneficiaryId == request.auth.uid ||
+            isOwner(hid) ||
+            memberData(hid).permissions.canCompleteAnyTask == true
+          );
         allow update: if false; // רשומות ביצוע אינן ניתנות לשינוי
         // מחיקה נדרשת בעת פתיחת משימה מחדש (הפחתת נקודות)
         allow delete: if isMember(hid);

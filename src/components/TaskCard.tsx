@@ -78,9 +78,20 @@ export function TaskCard({ task, onInfo, onEdit }: Props) {
 
     // סימון כבוצעה - קביעת מי מקבל את הנקודות
     const assignees = task.assigneeIds;
-    if (assignees.length > 1) {
-      // כמה אחראים - תמיד מאפשרים לבחור למי לזקוף (גם אם המסמן אחד מהם)
+    // בחירת מוטב מותרת רק למי שרשאי לסמן כל משימה (מנהל/בוגר/בעלים).
+    // אחראי רגיל (למשל ילד) - הנקודות תמיד אליו בלבד, ללא בחירה.
+    const canAttribute = hasPermission(currentMember, 'canCompleteAnyTask');
+    if (assignees.length > 1 && canAttribute) {
+      // כמה אחראים ובעל הרשאה - מאפשרים לבחור למי לזקוף
       setShowChooser(true);
+      return;
+    }
+    if (!canAttribute) {
+      // ללא הרשאת סימון-כללי - הנקודות למי שסימן (הוא בהכרח אחד האחראים)
+      await complete({
+        id: user.uid,
+        name: currentMember?.displayName ?? user.displayName,
+      });
       return;
     }
     if (assignees.length === 1) {
