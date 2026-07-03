@@ -143,5 +143,9 @@ export function computeBalances(
   for (const r of redemptions) {
     bal[r.userId] = (bal[r.userId] ?? 0) - (r.cost ?? 0);
   }
+  // הארנק לעולם אינו יורד מתחת לאפס (למשל אם משימה נפתחה מחדש אחרי פדיון)
+  for (const uid of Object.keys(bal)) {
+    if (bal[uid] < 0) bal[uid] = 0;
+  }
   return bal;
 }
