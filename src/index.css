@@ -848,6 +848,38 @@ a {
   padding: 0 3px;
 }
 
+/* ===== אפשרויות נוספות (טופס משימה) ===== */
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.advanced-toggle .chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.advanced-toggle .chevron.open {
+  transform: rotate(90deg);
+}
+
+.advanced-section {
+  border-inline-start: 2px solid var(--border);
+  padding-inline-start: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
 /* ===== Landing page ===== */
 .landing {
   max-width: 720px;

@@ -34,6 +34,14 @@ export function TaskFormModal({ task, onClose }: Props) {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // אזור "אפשרויות נוספות" מתקפל - נפתח אוטומטית בעריכה אם כבר הוגדרו ערכים בו
+  const [showAdvanced, setShowAdvanced] = useState(
+    !!(
+      task?.description ||
+      (task?.priority && task.priority !== 'normal') ||
+      (task?.recurrence && task.recurrence !== 'none')
+    )
+  );
 
   function toggleAssignee(id: string) {
     setAssigneeIds((prev) =>
@@ -130,70 +138,6 @@ export function TaskFormModal({ task, onClose }: Props) {
           />
         </div>
         <div className="field">
-          <label htmlFor="desc">תיאור (אופציונלי)</label>
-          <textarea
-            id="desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="פרטים נוספים…"
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="due">תאריך יעד (אופציונלי)</label>
-          <input
-            id="due"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="priority">עדיפות</label>
-          <select
-            id="priority"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value as TaskPriority)}
-          >
-            <option value="high">דחוף</option>
-            <option value="normal">רגיל</option>
-            <option value="low">נמוך</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="recurrence">חזרתיות</label>
-          <select
-            id="recurrence"
-            value={recurrence}
-            onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
-          >
-            <option value="none">חד-פעמי</option>
-            <option value="daily">כל יום</option>
-            <option value="weekly">כל שבוע</option>
-            <option value="monthly">כל חודש</option>
-          </select>
-          {recurrence !== 'none' && (
-            <div className="member-sub" style={{ marginTop: '0.35rem' }}>
-              בכל ביצוע, תאריך היעד יתגלגל אוטומטית למחזור הבא.
-            </div>
-          )}
-        </div>
-
-        <div className="field">
-          <label htmlFor="points">נקודות על ביצוע</label>
-          <input
-            id="points"
-            type="number"
-            min="0"
-            inputMode="numeric"
-            value={points}
-            onChange={(e) => setPoints(e.target.value)}
-          />
-        </div>
-
-        <div className="field">
           <label>אחראים על המשימה</label>
           {!canAssign && (
             <div className="info-banner">
@@ -217,6 +161,85 @@ export function TaskFormModal({ task, onClose }: Props) {
             ))}
           </div>
         </div>
+
+        <div className="field">
+          <label htmlFor="due">תאריך יעד (אופציונלי)</label>
+          <input
+            id="due"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="points">נקודות על ביצוע</label>
+          <input
+            id="points"
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
+          />
+        </div>
+
+        {/* אפשרויות נוספות - מתקפל */}
+        <button
+          type="button"
+          className="advanced-toggle"
+          onClick={() => setShowAdvanced((v) => !v)}
+          aria-expanded={showAdvanced}
+        >
+          <span className={`chevron ${showAdvanced ? 'open' : ''}`}>▸</span>
+          אפשרויות נוספות (תיאור, עדיפות, חזרתיות)
+        </button>
+
+        {showAdvanced && (
+          <div className="advanced-section">
+            <div className="field">
+              <label htmlFor="desc">תיאור (אופציונלי)</label>
+              <textarea
+                id="desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="פרטים נוספים…"
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="priority">עדיפות</label>
+              <select
+                id="priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+              >
+                <option value="high">דחוף</option>
+                <option value="normal">רגיל</option>
+                <option value="low">נמוך</option>
+              </select>
+            </div>
+
+            <div className="field">
+              <label htmlFor="recurrence">חזרתיות</label>
+              <select
+                id="recurrence"
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value as RecurrenceType)}
+              >
+                <option value="none">חד-פעמי</option>
+                <option value="daily">כל יום</option>
+                <option value="weekly">כל שבוע</option>
+                <option value="monthly">כל חודש</option>
+              </select>
+              {recurrence !== 'none' && (
+                <div className="member-sub" style={{ marginTop: '0.35rem' }}>
+                  בכל ביצוע, תאריך היעד יתגלגל אוטומטית למחזור הבא.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="modal-actions">
           <button className="btn" type="submit" disabled={busy || !title.trim()}>
