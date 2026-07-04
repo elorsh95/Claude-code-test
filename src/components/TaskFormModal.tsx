@@ -37,6 +37,7 @@ export function TaskFormModal({ task, onClose }: Props) {
   // אזור "אפשרויות נוספות" מתקפל - נפתח אוטומטית בעריכה אם כבר הוגדרו ערכים בו
   const [showAdvanced, setShowAdvanced] = useState(
     !!(
+      task?.dueDate ||
       task?.description ||
       (task?.priority && task.priority !== 'normal') ||
       (task?.recurrence && task.recurrence !== 'none')
@@ -163,16 +164,6 @@ export function TaskFormModal({ task, onClose }: Props) {
         </div>
 
         <div className="field">
-          <label htmlFor="due">תאריך יעד (אופציונלי)</label>
-          <input
-            id="due"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
-
-        <div className="field">
           <label htmlFor="points">נקודות על ביצוע</label>
           <input
             id="points"
@@ -192,11 +183,21 @@ export function TaskFormModal({ task, onClose }: Props) {
           aria-expanded={showAdvanced}
         >
           <span className={`chevron ${showAdvanced ? 'open' : ''}`}>▸</span>
-          אפשרויות נוספות (תיאור, עדיפות, חזרתיות)
+          אפשרויות נוספות (תאריך יעד, תיאור, עדיפות, חזרתיות)
         </button>
 
         {showAdvanced && (
           <div className="advanced-section">
+            <div className="field">
+              <label htmlFor="due">תאריך יעד (אופציונלי)</label>
+              <input
+                id="due"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
             <div className="field">
               <label htmlFor="desc">תיאור (אופציונלי)</label>
               <textarea
